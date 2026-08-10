@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { formatPrice } from '../utils/format.js';
 import CountdownTimer from './CountdownTimer.jsx';
 import { useToast } from './Toast.jsx';
@@ -13,16 +13,52 @@ const TYPE_BADGE = {
   BIENES_RAICES: 'bg-amber-100 text-amber-800',
 };
 
+/**
+ * Tarjeta de subasta del Home: muestra las fotos del producto en un carrusel
+ * (se desliza con el dedo) y, si el vendedor grabó un video, un botón para
+ * revisarlo sin salir de la página principal.
+ */
 export default function AuctionCard({ auction, isOwn, onBid, onOpen }) {
   const toast = useToast();
   const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [showVideo, setShowVideo] = useState(false);
+  const touchStartX = useRef(null);
 
-  const photo = auction.photos?.[0];
+  const photos = auction.photos ?? [];
+  const hasVideo = Boolean(auction.videoUrl);
   const endsAt = auction.extended_until ?? auction.ends_at;
   const currentPrice = Number(auction.current_price ?? auction.starting_price);
   const minBid = currentPrice + Number(auction.min_increment ?? 0);
+
+  const goPrev = (e) => {
+    e?.stopPropagation?.();
+    setActiveIndex((i) => (photos.length > 0 ? (i - 1 + photos.length) % photos.length : 0));
+  };
+
+  const goNext = (e) => {
+    e?.stopPropagation?.();
+    setActiveIndex((i) => (photos.length > 0 ? (i + 1) % photos.length : 0));
+  };
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (dx > 40) goPrev();
+    else if (dx < -40) goNext();
+    touchStartX.current = null;
+  };
+
+  const openVideo = (e) => {
+    e.stopPropagation();
+    setShowVideo(true);
+  };
 
   const handleBid = async () => {
     const value = Number(amount);
@@ -48,14 +84,65 @@ export default function AuctionCard({ auction, isOwn, onBid, onOpen }) {
       onClick={() => onOpen?.(auction.id)}
       className="group cursor-pointer overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-0.5 hover:shadow-md"
     >
-      <div className="relative aspect-[4/3] bg-slate-100">
-        {photo ? (
-          <img
-            src={photo}
-            alt={auction.title}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
+      <div
+        className="relative aspect-[4/3] select-none bg-slate-100"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {photos.length > 0 ? (
+          <>
+            <div
+              className="flex h-full w-full transition-transform duration-200"
+              style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+            >
+              {photos.map((photo, i) => (
+                <img
+                  key={`${photo}-${i}`}
+                  src={photo}
+                  alt={auction.title}
+                  className="h-full w-full shrink-0 object-cover"
+                  loading="lazy"
+                  draggable="false"
+                />
+              ))}
+            </div>
+
+            {photos.length > 1 && (
+              <>
+                <button
+                  onClick={goPrev}
+                  aria-label="Foto anterior"
+                  className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900/50 text-white transition hover:bg-slate-900/70"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M12.7 4.3a1 1 0 0 1 0 1.4L8.4 10l4.3 4.3a1 1 0 0 1-1.4 1.4l-5-5a1 1 0 0 1 0-1.4l5-5a1 1 0 0 1 1.4 0Z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={goNext}
+                  aria-label="Foto siguiente"
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900/50 text-white transition hover:bg-slate-900/70"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M7.3 4.3a1 1 0 0 0 0 1.4L11.6 10l-4.3 4.3a1 1 0 0 0 1.4 1.4l5-5a1 1 0 0 0 0-1.4l-5-5a1 1 0 0 0-1.4 0Z" />
+                  </svg>
+                </button>
+
+                <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
+                  {photos.map((_, i) => (
+                    <span
+                      key={i}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === activeIndex
+                          ? 'w-4 bg-white'
+                          : 'w-1.5 bg-white/60'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
         ) : (
           <div className="flex h-full w-full items-center justify-center text-sm text-slate-300">
             Sin foto
@@ -72,6 +159,18 @@ export default function AuctionCard({ auction, isOwn, onBid, onOpen }) {
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
           EN VIVO
         </span>
+
+        {hasVideo && (
+          <button
+            onClick={openVideo}
+            className="absolute bottom-2 right-2 flex items-center gap-1.5 rounded-full bg-slate-900/80 px-3 py-1.5 text-xs font-bold text-white backdrop-blur transition hover:bg-slate-900"
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M6.3 2.84A1 1 0 0 0 4.73 3.72v12.56a1 1 0 0 0 1.57.88l10-6.28a1 1 0 0 0 0-1.66l-10-6.38Z" />
+            </svg>
+            Ver video
+          </button>
+        )}
       </div>
 
       <div className="space-y-3 p-4">
@@ -134,6 +233,44 @@ export default function AuctionCard({ auction, isOwn, onBid, onOpen }) {
           )}
         </div>
       </div>
+
+      {/* Visor del video del producto, sin salir del Home */}
+      {showVideo && hasVideo && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowVideo(false);
+          }}
+        >
+          <div
+            className="w-full max-w-2xl overflow-hidden rounded-2xl bg-black shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 bg-slate-900 px-4 py-2.5">
+              <p className="truncate text-sm font-semibold text-white">
+                {auction.title}
+              </p>
+              <button
+                onClick={() => setShowVideo(false)}
+                aria-label="Cerrar video"
+                className="shrink-0 rounded-full p-1.5 text-slate-300 transition hover:bg-slate-800 hover:text-white"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                </svg>
+              </button>
+            </div>
+            <video
+              src={auction.videoUrl}
+              controls
+              playsInline
+              poster={photos[0] ?? undefined}
+              className="aspect-[16/9] w-full"
+            />
+          </div>
+        </div>
+      )}
     </article>
   );
 }
