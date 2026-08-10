@@ -403,6 +403,7 @@ export class AuctionService {
          a.extended_until,
          a.created_at,
          p.title,
+         p.description,
          p.photos,
          p.video_url,
          p.product_condition,

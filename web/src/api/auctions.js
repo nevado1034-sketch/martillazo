@@ -53,6 +53,53 @@ export async function fetchMyAuctions(token) {
   return data;
 }
 
+/**
+ * Edita una publicación del vendedor (título, descripción, precio si no hay
+ * pujas, fotos y video).
+ */
+export async function updateMyAuction({ auctionId, token, patch }) {
+  const res = await fetch(`${API_URL}/api/my/auctions/${auctionId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) {
+    let message = 'No se pudo guardar la publicación';
+    try {
+      const { error } = await res.json();
+      if (error?.message) message = error.message;
+    } catch {
+      // silencioso
+    }
+    throw new Error(message);
+  }
+  const { data } = await res.json();
+  return data;
+}
+
+/** Elimina una publicación en vivo sin pujas (vendedor). */
+export async function deleteMyAuction({ auctionId, token }) {
+  const res = await fetch(`${API_URL}/api/my/auctions/${auctionId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    let message = 'No se pudo eliminar la publicación';
+    try {
+      const { error } = await res.json();
+      if (error?.message) message = error.message;
+    } catch {
+      // silencioso
+    }
+    throw new Error(message);
+  }
+  const { data } = await res.json();
+  return data;
+}
+
 /** Postores de una subasta (solo el dueño): quién paga más y cómo contactarlo. */
 export async function fetchAuctionBidders({ auctionId, token }) {
   const res = await fetch(`${API_URL}/api/auctions/${auctionId}/bidders`, {

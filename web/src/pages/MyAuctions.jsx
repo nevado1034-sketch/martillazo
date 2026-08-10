@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
-import { fetchAuctionBidders, fetchMyAuctions } from '../api/auctions.js';
+import {
+  deleteMyAuction,
+  fetchAuctionBidders,
+  fetchMyAuctions,
+} from '../api/auctions.js';
 import { formatPrice } from '../utils/format.js';
 import CountdownTimer from '../components/CountdownTimer.jsx';
+import EditAuctionModal from '../components/EditAuctionModal.jsx';
 
 /**
  * Panel del vendedor: sus publicaciones y, para cada una, quién está pujando
@@ -37,6 +42,8 @@ export default function MyAuctions({ session, onBack, onOpenDetail }) {
   const [bidders, setBidders] = useState({});
   const [biddersBusy, setBiddersBusy] = useState(false);
   const [biddersError, setBiddersError] = useState('');
+  const [editTarget, setEditTarget] = useState(null);
+  const [actionError, setActionError] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -54,6 +61,30 @@ export default function MyAuctions({ session, onBack, onOpenDetail }) {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleEdit = (a) => {
+    setActionError('');
+    setEditTarget(a);
+  };
+
+  const handleSaved = () => {
+    setEditTarget(null);
+    load();
+  };
+
+  const handleDelete = async (a) => {
+    const confirmed = window.confirm(
+      `¿Eliminar "${a.title}"? Esta acción no se puede deshacer.`,
+    );
+    if (!confirmed) return;
+    setActionError('');
+    try {
+      await deleteMyAuction({ auctionId: a.id, token: session.token });
+      setAuctions((prev) => prev.filter((x) => x.id !== a.id));
+    } catch (err) {
+      setActionError(err.message);
+    }
+  };
 
   const toggleBidders = async (auctionId) => {
     if (openId === auctionId) {
@@ -119,6 +150,12 @@ export default function MyAuctions({ session, onBack, onOpenDetail }) {
           </p>
         )}
 
+        {actionError && (
+          <p className="mb-4 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+            {actionError}
+          </p>
+        )}
+
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -145,7 +182,7 @@ export default function MyAuctions({ session, onBack, onOpenDetail }) {
                 className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
               >
                 <div className="flex items-center gap-4 p-4">
-                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
                     {a.photos?.[0] ? (
                       <img
                         src={a.photos[0]}
@@ -157,6 +194,13 @@ export default function MyAuctions({ session, onBack, onOpenDetail }) {
                       <div className="flex h-full w-full items-center justify-center text-[10px] text-slate-300">
                         Sin foto
                       </div>
+                    )}
+                    {a.videoUrl && (
+                      <span className="absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded bg-slate-900/70">
+                        <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M6.3 2.84A1 1 0 0 0 4.73 3.72v12.56a1 1 0 0 0 1.57.88l10-6.28a1 1 0 0 0 0-1.66l-10-6.38Z" />
+                        </svg>
+                      </span>
                     )}
                   </div>
 
@@ -186,12 +230,26 @@ export default function MyAuctions({ session, onBack, onOpenDetail }) {
                     {a.status === 'ACTIVE' ? (
                       <>
                         <CountdownTimer endsAt={a.extended_until ?? a.ends_at} />
-                        <button
-                          onClick={() => toggleBidders(a.id)}
-                          className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-slate-800"
-                        >
-                          {openId === a.id ? 'Ocultar postores' : 'Ver postores'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => toggleBidders(a.id)}
+                            className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-slate-800"
+                          >
+                            {openId === a.id ? 'Ocultar postores' : 'Ver postores'}
+                          </button>
+                          <button
+                            onClick={() => handleEdit(a)}
+                            className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-slate-400"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => handleDelete(a)}
+                            className="rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 transition hover:border-red-300 hover:bg-red-100"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
                       </>
                     ) : a.status === 'AWARDED' ? (
                       <button
@@ -268,6 +326,15 @@ export default function MyAuctions({ session, onBack, onOpenDetail }) {
           </div>
         )}
       </main>
+
+      {editTarget && (
+        <EditAuctionModal
+          auction={editTarget}
+          token={session.token}
+          onClose={() => setEditTarget(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </div>
   );
 }
