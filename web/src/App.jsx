@@ -1,91 +1,26 @@
-import { useState } from 'react';
-import { clearDemoSession, loadDemoSession, saveDemoSession } from './api/auth.js';
-import { ToastProvider } from './components/Toast.jsx';
-import Home from './pages/Home.jsx';
-import MyAuctions from './pages/MyAuctions.jsx';
-import AuctionDetail from './pages/AuctionDetail.jsx';
-import Profile from './pages/Profile.jsx';
-
-function AppRoutes() {
-  const [session, setSession] = useState(loadDemoSession);
-  const [view, setView] = useState('home');
-  const [selectedAuctionId, setSelectedAuctionId] = useState(null);
-
-  const handleSession = (next) => {
-    saveDemoSession(next);
-    setSession(next);
-  };
-
-  const handleLogout = () => {
-    clearDemoSession();
-    setSession(null);
-    setView('home');
-  };
-
-  const openDetail = (auctionId) => {
-    setSelectedAuctionId(auctionId);
-    setView('detail');
-  };
-
-  const backToHome = () => {
-    setSelectedAuctionId(null);
-    setView('home');
-  };
-
-  if (view === 'detail' && selectedAuctionId) {
-    return (
-      <AuctionDetail
-        session={session}
-        onSession={handleSession}
-        onLogout={handleLogout}
-        onNavigateMine={() => setView('mine')}
-        onNavigateProfile={() => setView('profile')}
-        onNavigateHome={backToHome}
-        onBack={backToHome}
-        auctionId={selectedAuctionId}
-      />
-    );
-  }
-
-  if (view === 'mine') {
-    return (
-      <MyAuctions
-        session={session}
-        onBack={backToHome}
-        onOpenDetail={openDetail}
-      />
-    );
-  }
-
-  if (view === 'profile') {
-    return (
-      <Profile
-        session={session}
-        onSession={handleSession}
-        onLogout={handleLogout}
-        onNavigateHome={backToHome}
-        onNavigateMine={() => setView('mine')}
-        onOpenDetail={openDetail}
-      />
-    );
-  }
-
-  return (
-    <Home
-      session={session}
-      onSession={handleSession}
-      onLogout={handleLogout}
-      onNavigateMine={() => setView('mine')}
-      onNavigateProfile={() => setView('profile')}
-      onOpenDetail={openDetail}
-    />
-  );
-}
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { MarketplaceProvider } from './store/MarketplaceContext.jsx';
+import { ToastProvider } from './components/ui/Toast.jsx';
+import CookieBanner from './components/layout/CookieBanner.jsx';
+import HomePage from './pages/HomePage.jsx';
+import BrowsePage from './pages/BrowsePage.jsx';
+import ListingDetailPage from './pages/ListingDetailPage.jsx';
+import PublishPage from './pages/PublishPage.jsx';
 
 export default function App() {
   return (
     <ToastProvider>
-      <AppRoutes />
+      <MarketplaceProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/buscar" element={<BrowsePage />} />
+            <Route path="/anuncio/:id" element={<ListingDetailPage />} />
+            <Route path="/publicar" element={<PublishPage />} />
+          </Routes>
+          <CookieBanner />
+        </BrowserRouter>
+      </MarketplaceProvider>
     </ToastProvider>
   );
 }
