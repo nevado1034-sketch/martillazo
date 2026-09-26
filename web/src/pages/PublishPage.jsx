@@ -66,7 +66,7 @@ export default function PublishPage() {
       title: title.trim(),
       description: description.trim() || 'Sin descripción adicional.',
       price: Number(price),
-      currency: 'EUR',
+      currency: 'PEN',
       category,
       location: location.trim(),
       images: imageUrl.trim()
@@ -154,7 +154,7 @@ export default function PublishPage() {
                 Servicio
               </span>
               <p className="mt-1 text-sm text-[var(--ink-muted)]">
-                €/hora, desde o fijo — zona y disponibilidad.
+                S/ por hora, desde o fijo — zona y disponibilidad.
               </p>
             </button>
           </div>
@@ -213,12 +213,12 @@ export default function PublishPage() {
                       onChange={(e) => setPriceMode(e.target.value)}
                       className="field-input"
                     >
-                      <option value="hora">Por hora</option>
+                      <option value="hora">S/ por hora</option>
                       <option value="desde">Desde</option>
                       <option value="fijo">Precio fijo</option>
                     </select>
                   </Field>
-                  <Field label="Importe (€)" htmlFor="pub-price">
+                  <Field label="Importe (S/)" htmlFor="pub-price">
                     <input
                       id="pub-price"
                       type="number"
@@ -253,7 +253,7 @@ export default function PublishPage() {
             ) : (
               <>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Precio (€)" htmlFor="pub-price">
+                  <Field label="Precio (S/)" htmlFor="pub-price">
                     <input
                       id="pub-price"
                       type="number"
@@ -306,7 +306,7 @@ export default function PublishPage() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 required
-                placeholder="Ciudad o barrio"
+                placeholder="Distrito o ciudad"
                 className="field-input"
               />
             </Field>

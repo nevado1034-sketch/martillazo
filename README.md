@@ -1,6 +1,6 @@
 # PulgasYa
 
-Marketplace español de **segunda mano + servicios**. Compra, vende y contrata cerca de ti — con tarifas de servicio reales y la opción de **proponer precio**.
+Marketplace peruano de **segunda mano + servicios**. Compra, vende y contrata cerca de ti — precios en **soles (S/)**, tarifas de servicio reales y la opción de **proponer precio**.
 
 ## MVP (web)
 
@@ -53,6 +53,6 @@ web/src/
 ## Diferenciadores vs clasificados genéricos
 
 - **Productos | Servicios** al mismo nivel (nav, home, publicar)
-- Servicios con €/h, desde o fijo — no precio de sofá a 0 €
+- Servicios con S/h, desde o fijo — no precio de sofá a S/ 0
 - **Proponer precio** en ficha (ofertas en estado local)
 - Explorar sin login; cookie banner simple en español

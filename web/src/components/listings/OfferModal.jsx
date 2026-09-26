@@ -72,7 +72,7 @@ export default function OfferModal({ listing, open, onClose, onSubmit }) {
         <form onSubmit={handleSubmit} className="mt-4 space-y-3">
           <div>
             <label htmlFor="offer-amount" className="mb-1 block text-sm font-medium">
-              Tu oferta (€)
+              Tu oferta (S/)
             </label>
             <input
               ref={inputRef}
