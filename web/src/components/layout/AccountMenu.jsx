@@ -106,28 +106,28 @@ export function AccountMenuMobile({ user, onLogout, onNavigate }) {
       <div className="mt-3 flex flex-col gap-1">
         <Link
           to="/mis-anuncios"
-          className="rounded-lg px-2 py-2 text-sm font-medium text-[var(--text-dark)] hover:bg-white"
+          className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-dark)] active:bg-white"
           onClick={onNavigate}
         >
           Mis anuncios
         </Link>
         <Link
           to="/mis-ofertas"
-          className="rounded-lg px-2 py-2 text-sm font-medium text-[var(--text-dark)] hover:bg-white"
+          className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-dark)] active:bg-white"
           onClick={onNavigate}
         >
           Mis ofertas
         </Link>
         <Link
           to="/publicar"
-          className="rounded-lg px-2 py-2 text-sm font-medium text-[var(--cta-orange)] hover:bg-white"
+          className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--cta-orange)] active:bg-white"
           onClick={onNavigate}
         >
           Publicar
         </Link>
         <button
           type="button"
-          className="rounded-lg px-2 py-2 text-left text-sm font-medium text-[var(--ink-muted)] hover:bg-white"
+          className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[var(--ink-muted)] active:bg-white"
           onClick={() => {
             onLogout();
             onNavigate?.();
