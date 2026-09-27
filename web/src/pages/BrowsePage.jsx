@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import SiteHeader from '../components/layout/SiteHeader.jsx';
 import SiteFooter from '../components/layout/SiteFooter.jsx';
@@ -11,28 +11,28 @@ import {
 } from '../data/mockListings.js';
 
 export default function BrowsePage() {
-  const { listings } = useMarketplace();
+  const { listings, loading, refreshListings } = useMarketplace();
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
+  const [fetching, setFetching] = useState(false);
 
   const q = params.get('q') || '';
   const tipo = params.get('tipo') || 'todos';
   const cat = params.get('cat') || '';
 
+  useEffect(() => {
+    setFetching(true);
+    refreshListings({
+      tipo: tipo === 'todos' ? undefined : tipo,
+      q: q || undefined,
+      cat: cat || undefined,
+    }).finally(() => setFetching(false));
+  }, [q, tipo, cat, refreshListings]);
+
   const categories =
     tipo === 'servicio' ? SERVICE_CATEGORIES : PRODUCT_CATEGORIES;
 
-  const results = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return listings.filter((l) => {
-      if (tipo === 'producto' && l.type !== 'producto') return false;
-      if (tipo === 'servicio' && l.type !== 'servicio') return false;
-      if (cat && l.category !== cat) return false;
-      if (!needle) return true;
-      const hay = `${l.title} ${l.description} ${l.location} ${l.seller?.name}`.toLowerCase();
-      return hay.includes(needle);
-    });
-  }, [listings, q, tipo, cat]);
+  const results = useMemo(() => listings, [listings]);
 
   const setTipo = (next) => {
     const p = new URLSearchParams(params);
@@ -66,11 +66,16 @@ export default function BrowsePage() {
           {q ? `Resultados para «${q}»` : 'Explorar anuncios'}
         </h1>
         <p className="mt-1 text-sm text-[var(--ink-muted)]">
-          {results.length} anuncio{results.length === 1 ? '' : 's'}
+          {fetching || loading
+            ? 'Buscando…'
+            : `${results.length} anuncio${results.length === 1 ? '' : 's'}`}
         </p>
 
         <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <TypeToggle value={tipo === 'producto' || tipo === 'servicio' ? tipo : 'todos'} onChange={setTipo} />
+          <TypeToggle
+            value={tipo === 'producto' || tipo === 'servicio' ? tipo : 'todos'}
+            onChange={setTipo}
+          />
         </div>
 
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
@@ -90,17 +95,16 @@ export default function BrowsePage() {
           ))}
         </div>
 
-        {results.length === 0 ? (
+        {results.length === 0 && !loading && !fetching ? (
           <p className="mt-12 text-center text-[var(--ink-muted)]">
-            No hay anuncios con esos filtros. Prueba otra búsqueda o{' '}
+            No hay anuncios con esos filtros.{' '}
             <button
               type="button"
               className="font-semibold text-[var(--brand)] underline"
               onClick={() => navigate('/buscar')}
             >
-              limpia los filtros
+              Limpiar filtros
             </button>
-            .
           </p>
         ) : (
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

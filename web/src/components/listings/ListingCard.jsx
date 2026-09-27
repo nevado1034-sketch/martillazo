@@ -15,7 +15,7 @@ export default function ListingCard({ listing, index = 0 }) {
       className="group block animate-rise"
       style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
     >
-      <article className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white transition duration-300 hover:-translate-y-1 hover:border-[var(--brand-soft)] hover:shadow-md">
+      <article className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white/95 transition duration-300 hover:-translate-y-1 hover:border-[var(--brand-soft)] hover:shadow-[0_12px_28px_-16px_rgba(13,115,119,0.45)]">
         <div className="relative aspect-[4/3] overflow-hidden bg-[var(--mint-wash)]">
           {img ? (
             <img
@@ -29,12 +29,14 @@ export default function ListingCard({ listing, index = 0 }) {
               Sin foto
             </div>
           )}
-          <span className="absolute left-2 top-2 rounded-lg bg-white/95 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-[var(--brand)]">
+          <span className="absolute left-2 top-2 rounded-md bg-white/95 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--brand)]">
             {isService ? 'Servicio' : 'Producto'}
           </span>
         </div>
         <div className="space-y-1.5 p-3.5">
-          <p className="font-display text-lg font-semibold text-[var(--ink)]">{priceLabel}</p>
+          <p className="font-display text-lg font-semibold tracking-tight text-[var(--ink)]">
+            {priceLabel}
+          </p>
           <h3 className="line-clamp-2 text-sm font-medium leading-snug text-[var(--ink)]">
             {listing.title}
           </h3>
@@ -50,7 +52,7 @@ export default function ListingCard({ listing, index = 0 }) {
             )}
           </p>
           {isService && listing.availableToday && (
-            <p className="text-xs font-medium text-[var(--brand)]">Disponible hoy</p>
+            <p className="text-xs font-semibold text-[var(--brand)]">Disponible hoy</p>
           )}
         </div>
       </article>

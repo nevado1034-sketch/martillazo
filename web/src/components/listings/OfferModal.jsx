@@ -14,14 +14,13 @@ export default function OfferModal({ listing, open, onClose, onSubmit }) {
 
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
-  const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open || !listing) return;
     setAmount(String(Math.max(1, Math.floor(listing.price * 0.9))));
     setMessage('');
-    setName('');
     setError('');
     const t = window.setTimeout(() => inputRef.current?.focus(), 50);
     return () => window.clearTimeout(t);
@@ -38,14 +37,22 @@ export default function OfferModal({ listing, open, onClose, onSubmit }) {
 
   if (!open || !listing) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const n = Number(amount);
     if (!Number.isFinite(n) || n <= 0) {
-      setError('Indica un importe válido.');
+      setError('Indica un importe válido en soles.');
       return;
     }
-    onSubmit({ amount: n, message, buyerName: name });
+    setBusy(true);
+    setError('');
+    try {
+      await onSubmit({ amount: n, message });
+    } catch (err) {
+      setError(err.message || 'No se pudo enviar la oferta');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -88,18 +95,6 @@ export default function OfferModal({ listing, open, onClose, onSubmit }) {
             />
           </div>
           <div>
-            <label htmlFor="offer-name" className="mb-1 block text-sm font-medium">
-              Tu nombre
-            </label>
-            <input
-              id="offer-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Opcional en el MVP"
-              className="w-full rounded-xl border border-[var(--line)] px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)]"
-            />
-          </div>
-          <div>
             <label htmlFor="offer-msg" className="mb-1 block text-sm font-medium">
               Mensaje
             </label>
@@ -127,9 +122,10 @@ export default function OfferModal({ listing, open, onClose, onSubmit }) {
             </button>
             <button
               type="submit"
-              className="flex-1 rounded-xl bg-[var(--coral)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--coral-deep)]"
+              disabled={busy}
+              className="flex-1 rounded-xl bg-[var(--coral)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--coral-deep)] disabled:opacity-60"
             >
-              Enviar oferta
+              {busy ? 'Enviando…' : 'Enviar oferta'}
             </button>
           </div>
         </form>

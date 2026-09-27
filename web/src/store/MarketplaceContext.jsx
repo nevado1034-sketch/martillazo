@@ -2,99 +2,119 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
-import { MOCK_LISTINGS } from '../data/mockListings.js';
-import { readJSON, writeJSON } from '../utils/storage.js';
+import { createListing, fetchListing, fetchListings } from '../api/listings.js';
+import {
+  createOffer,
+  fetchListingOffers,
+  fetchMyOffers,
+} from '../api/offers.js';
+import { useAuth } from './AuthContext.jsx';
+import { mediaUrl } from '../api/config.js';
 
 const MarketplaceContext = createContext(null);
 
-function loadUserListings() {
-  return readJSON('listings', []);
-}
-
-function loadOffers() {
-  return readJSON('offers', []);
+function normalizeListing(listing) {
+  if (!listing) return null;
+  return {
+    ...listing,
+    images: (listing.images || []).map((u) => mediaUrl(u)),
+    priceMode: listing.priceMode || listing.price_mode,
+    availableToday: listing.availableToday ?? listing.available_today,
+  };
 }
 
 export function MarketplaceProvider({ children }) {
-  const [userListings, setUserListings] = useState(loadUserListings);
-  const [offers, setOffers] = useState(loadOffers);
+  const { token } = useAuth();
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const listings = useMemo(
-    () => [...userListings, ...MOCK_LISTINGS],
-    [userListings],
-  );
+  const refreshListings = useCallback(async (params = {}) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchListings(params);
+      setListings((data || []).map(normalizeListing));
+      return data;
+    } catch (err) {
+      setError(err.message || 'No se pudieron cargar los anuncios');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshListings().catch(() => {});
+  }, [refreshListings]);
 
   const getListing = useCallback(
-    (id) => listings.find((l) => l.id === id) ?? null,
+    async (id) => {
+      const cached = listings.find((l) => l.id === id);
+      if (cached) return cached;
+      const data = await fetchListing(id);
+      return normalizeListing(data);
+    },
     [listings],
   );
 
-  const publishListing = useCallback((payload) => {
-    const listing = {
-      ...payload,
-      id: `u-${Date.now().toString(36)}`,
-      createdAt: new Date().toISOString(),
-      seller: payload.seller ?? {
-        id: 'u-yo',
-        name: 'Tú',
-        rating: 5,
-        reviews: 0,
-        verified: false,
-      },
-      distanceKm: payload.distanceKm ?? 0.5,
-    };
-    setUserListings((prev) => {
-      const next = [listing, ...prev];
-      writeJSON('listings', next);
-      return next;
-    });
-    return listing;
-  }, []);
-
-  const makeOffer = useCallback(({ listingId, amount, message, buyerName }) => {
-    const offer = {
-      id: `o-${Date.now().toString(36)}`,
-      listingId,
-      amount: Number(amount),
-      message: message?.trim() || '',
-      buyerName: buyerName?.trim() || 'Comprador',
-      status: 'pendiente',
-      createdAt: new Date().toISOString(),
-    };
-    setOffers((prev) => {
-      const next = [offer, ...prev];
-      writeJSON('offers', next);
-      return next;
-    });
-    return offer;
-  }, []);
-
-  const offersForListing = useCallback(
-    (listingId) => offers.filter((o) => o.listingId === listingId),
-    [offers],
+  const publishListing = useCallback(
+    async (input) => {
+      if (!token) throw new Error('Debes iniciar sesión para publicar');
+      const created = normalizeListing(await createListing(token, input));
+      setListings((prev) => [created, ...prev.filter((l) => l.id !== created.id)]);
+      return created;
+    },
+    [token],
   );
+
+  const makeOffer = useCallback(
+    async ({ listingId, amount, message }) => {
+      if (!token) throw new Error('Debes iniciar sesión para ofertar');
+      return createOffer(token, listingId, { amount, message });
+    },
+    [token],
+  );
+
+  const loadOffers = useCallback(
+    async (listingId) => {
+      if (!token) return { offers: [], isSeller: false };
+      return fetchListingOffers(token, listingId);
+    },
+    [token],
+  );
+
+  const loadMyOffers = useCallback(async () => {
+    if (!token) return [];
+    return fetchMyOffers(token);
+  }, [token]);
 
   const value = useMemo(
     () => ({
       listings,
-      userListings,
-      offers,
+      loading,
+      error,
+      refreshListings,
       getListing,
       publishListing,
       makeOffer,
-      offersForListing,
+      loadOffers,
+      loadMyOffers,
     }),
     [
       listings,
-      userListings,
-      offers,
+      loading,
+      error,
+      refreshListings,
       getListing,
       publishListing,
       makeOffer,
-      offersForListing,
+      loadOffers,
+      loadMyOffers,
     ],
   );
 
@@ -108,7 +128,7 @@ export function MarketplaceProvider({ children }) {
 export function useMarketplace() {
   const ctx = useContext(MarketplaceContext);
   if (!ctx) {
-    throw new Error('useMarketplace debe usarse dentro de MarketplaceProvider');
+    throw new Error('useMarketplace debe usarse dentro de MarketplaceContext');
   }
   return ctx;
 }

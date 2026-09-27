@@ -1,20 +1,22 @@
-/**
- * Capa de anuncios.
- * MVP: datos mock + localStorage vía MarketplaceContext.
- * Futuro: GET/POST /api/listings
- */
-import { MOCK_LISTINGS } from '../data/mockListings.js';
+import { apiFetch } from './config.js';
 
-export async function fetchListings({ tipo, q } = {}) {
-  let items = [...MOCK_LISTINGS];
-  if (tipo === 'producto' || tipo === 'servicio') {
-    items = items.filter((l) => l.type === tipo);
-  }
-  if (q?.trim()) {
-    const needle = q.trim().toLowerCase();
-    items = items.filter((l) =>
-      `${l.title} ${l.description}`.toLowerCase().includes(needle),
-    );
-  }
-  return items;
+export async function fetchListings(params = {}) {
+  const qs = new URLSearchParams();
+  if (params.tipo && params.tipo !== 'todos') qs.set('tipo', params.tipo);
+  if (params.q) qs.set('q', params.q);
+  if (params.cat) qs.set('cat', params.cat);
+  const q = qs.toString();
+  return apiFetch(`/api/listings${q ? `?${q}` : ''}`);
+}
+
+export async function fetchListing(id) {
+  return apiFetch(`/api/listings/${id}`);
+}
+
+export async function createListing(token, input) {
+  return apiFetch('/api/listings', { token, method: 'POST', body: input });
+}
+
+export async function fetchMyListings(token) {
+  return apiFetch('/api/me/listings', { token });
 }

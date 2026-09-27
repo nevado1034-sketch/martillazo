@@ -1,8 +1,10 @@
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useAuth } from '../../store/AuthContext.jsx';
 
 export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
   const navigate = useNavigate();
+  const { user, logout, setAuthOpen } = useAuth();
   const [q, setQ] = useState(searchValue);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -23,8 +25,8 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
     }`;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:gap-4">
+    <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[color-mix(in_srgb,var(--surface)_90%,transparent)] backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
         <Link
           to="/"
           className="shrink-0 font-display text-xl font-bold tracking-tight text-[var(--brand)] sm:text-2xl"
@@ -53,13 +55,34 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
           </div>
         </form>
 
-        <nav className="ml-auto hidden items-center gap-5 lg:flex">
+        <nav className="ml-auto hidden items-center gap-4 lg:flex">
           <NavLink to="/buscar?tipo=producto" className={linkClass}>
             Productos
           </NavLink>
           <NavLink to="/buscar?tipo=servicio" className={linkClass}>
             Servicios
           </NavLink>
+          <NavLink to="/mis-ofertas" className={linkClass}>
+            Mis ofertas
+          </NavLink>
+          {user ? (
+            <button
+              type="button"
+              onClick={logout}
+              className="text-sm font-medium text-[var(--ink-muted)] hover:text-[var(--ink)]"
+              title={user.email}
+            >
+              Salir
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAuthOpen(true)}
+              className="text-sm font-medium text-[var(--ink-muted)] hover:text-[var(--ink)]"
+            >
+              Entrar
+            </button>
+          )}
           <NavLink
             to="/publicar"
             className="rounded-xl bg-[var(--coral)] px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-[var(--coral-deep)] hover:scale-[1.02] active:scale-[0.98]"
@@ -79,7 +102,7 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
       </div>
 
       {menuOpen && (
-        <div className="border-t border-[var(--line)] bg-white px-4 py-3 lg:hidden">
+        <div className="border-t border-[var(--line)] bg-white px-4 py-3 lg:hidden animate-fade-in">
           <form onSubmit={submit} className="mb-3 md:hidden">
             <input
               value={q}
@@ -95,6 +118,18 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
             <NavLink to="/buscar?tipo=servicio" className={linkClass} onClick={() => setMenuOpen(false)}>
               Servicios
             </NavLink>
+            <NavLink to="/mis-ofertas" className={linkClass} onClick={() => setMenuOpen(false)}>
+              Mis ofertas
+            </NavLink>
+            {user ? (
+              <button type="button" className="text-left text-sm font-medium text-[var(--ink-muted)]" onClick={() => { logout(); setMenuOpen(false); }}>
+                Salir ({user.fullName?.split(' ')[0]})
+              </button>
+            ) : (
+              <button type="button" className="text-left text-sm font-medium text-[var(--brand)]" onClick={() => { setAuthOpen(true); setMenuOpen(false); }}>
+                Entrar / Crear cuenta
+              </button>
+            )}
             <NavLink
               to="/publicar"
               className="rounded-xl bg-[var(--coral)] px-3.5 py-2.5 text-center text-sm font-semibold text-white"

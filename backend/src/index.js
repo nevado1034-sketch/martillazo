@@ -13,6 +13,7 @@ import { getPaymentProvider } from './modules/payments/providers/index.js';
 import { createCache } from './redis/cache.js';
 import { createSocketServer } from './sockets/index.js';
 import { AuctionCloser } from './jobs/auctionCloser.js';
+import { ListingsService } from './modules/listings/listings.service.js';
 
 async function main() {
   await pingDatabase();
@@ -22,6 +23,7 @@ async function main() {
 
   const auctionService = new AuctionService({ pool });
   const authService = new AuthService({ pool });
+  const listingsService = new ListingsService({ pool });
 
   const provider = getPaymentProvider(env.paymentProvider);
   const commissionService = new CommissionService({ pool });
@@ -40,12 +42,13 @@ async function main() {
     settlementService,
     walletService,
     authService,
+    listingsService,
   });
   const { httpServer, io } = createSocketServer(app, { bidService });
 
-  httpServer.listen(env.port, () => {
+  httpServer.listen(env.port, '0.0.0.0', () => {
     console.log(
-      `[server] Martillazo API + WebSockets en http://localhost:${env.port}`,
+      `[server] PulgasYa API + WebSockets en http://0.0.0.0:${env.port}`,
     );
   });
 

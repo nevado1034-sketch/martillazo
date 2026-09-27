@@ -10,8 +10,9 @@
   "scripts": {
     "dev:backend": "npm --workspace backend run dev",
     "dev:web": "npm --workspace web run dev",
-    "dev": "npm --workspace web run dev",
-    "dev:all": "concurrently -n backend,web -c blue,magenta \"npm:dev:backend\" \"npm:dev:web\"",
+    "dev": "concurrently -n api,web -c blue,magenta \"npm:dev:backend\" \"npm:dev:web\"",
+    "dev:web-only": "npm --workspace web run dev",
+    "dev:all": "concurrently -n api,web -c blue,magenta \"npm:dev:backend\" \"npm:dev:web\"",
     "start": "npm --workspace backend run start",
     "build": "npm --workspace web run build"
   },

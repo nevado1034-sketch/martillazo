@@ -1,58 +1,45 @@
 # PulgasYa
 
-Marketplace peruano de **segunda mano + servicios**. Compra, vende y contrata cerca de ti — precios en **soles (S/)**, tarifas de servicio reales y la opción de **proponer precio**.
+Marketplace peruano de **segunda mano + servicios**. Compra, vende y contrata cerca de ti — precios en **soles (S/)**, WhatsApp, ofertas y auth real.
 
-## MVP (web)
+## MVP
 
 | Ruta | Qué hace |
 |------|----------|
-| `/` | Home brand-first: hero híbrido, CTA Buscar + Publicar, pilares Productos \| Servicios |
-| `/buscar` | Exploración / búsqueda con filtro de tipo y categorías |
-| `/anuncio/:id` | Ficha (plantilla producto ≠ servicio) + **Proponer precio** |
-| `/publicar` | Flujo corto: elige Producto o Servicio → campos mínimos |
-
-Datos de demo en cliente + anuncios/ofertas propios en `localStorage`. Backend de subastas del monorepo queda para fases posteriores (auth, chat, pagos/escrow).
+| `/` | Home brand-first + CTAs Buscar / Publicar |
+| `/buscar` | Exploración con filtro Productos \| Servicios |
+| `/anuncio/:id` | Ficha + WhatsApp + Proponer precio |
+| `/publicar` | Flujo corto (auth + foto + campos por tipo) |
+| `/mis-ofertas` | Ofertas enviadas por el comprador |
 
 ## Stack
 
 - **Web:** React 18 + Vite + Tailwind + React Router
-- **Estado MVP:** Context + localStorage (`pulgasya:*`)
-- **Backend (futuro):** carpeta `backend/` (Express) — no requerido para el MVP web
+- **API:** Express (monorepo `backend/`) + JWT + multer
+- **DB:** PostgreSQL (`pulgasya_listings`, `pulgasya_offers`, `users`)
 
 ## Cómo ejecutar
 
-Requisitos: **Node.js ≥ 18.17**
-
 ```bash
+# PostgreSQL + migraciones (ver docs/pulgasya-mvp-notes.md en el Agent Store)
+cp backend/.env.example backend/.env
+cp web/.env.example web/.env
 npm install
 npm run dev
 ```
 
-Abre `http://localhost:5173`
+- Web: http://localhost:5173  
+- API: http://localhost:4000  
 
-```bash
-npm run build    # build de producción (web)
-npm run dev:all  # web + backend legacy (opcional)
-```
+Cuenta demo: `demo@pulgasya.com` / `pulgasya123`
 
 ## Estructura web
 
 ```
 web/src/
-├── api/           # stubs listos para API real
-├── components/
-│   ├── layout/    # header, footer, cookies ES
-│   ├── listings/  # cards, toggle, offer modal
-│   └── ui/
-├── data/          # mock listings
-├── pages/         # Home, Browse, Detail, Publish
-├── store/         # MarketplaceContext
-└── utils/
+├── api/           # auth, listings, offers, uploads
+├── components/    # layout, listings, auth, ui
+├── pages/
+├── store/         # AuthContext + MarketplaceContext
+└── utils/         # format S/, whatsapp
 ```
-
-## Diferenciadores vs clasificados genéricos
-
-- **Productos | Servicios** al mismo nivel (nav, home, publicar)
-- Servicios con S/h, desde o fijo — no precio de sofá a S/ 0
-- **Proponer precio** en ficha (ofertas en estado local)
-- Explorar sin login; cookie banner simple en español

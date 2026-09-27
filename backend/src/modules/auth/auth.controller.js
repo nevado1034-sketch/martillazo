@@ -5,6 +5,31 @@ export class AuthController {
     this.service = service;
   }
 
+  register = async (req, res, next) => {
+    try {
+      const { email, password, fullName, phone } = req.body ?? {};
+      const result = await this.service.register({
+        email,
+        password,
+        fullName,
+        phone,
+      });
+      return res.status(201).json({ data: result });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  login = async (req, res, next) => {
+    try {
+      const { email, password } = req.body ?? {};
+      const result = await this.service.login({ email, password });
+      return res.json({ data: result });
+    } catch (err) {
+      next(err);
+    }
+  };
+
   /**
    * POST /api/auth/social/:provider
    * Simulación de login social (Google/Facebook) en desarrollo. En producción

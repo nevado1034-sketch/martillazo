@@ -3,7 +3,9 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import SiteHeader from '../components/layout/SiteHeader.jsx';
 import SiteFooter from '../components/layout/SiteFooter.jsx';
 import { useMarketplace } from '../store/MarketplaceContext.jsx';
+import { useAuth } from '../store/AuthContext.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
+import { uploadPhoto } from '../api/uploads.js';
 import {
   PRODUCT_CATEGORIES,
   SERVICE_CATEGORIES,
@@ -19,6 +21,7 @@ export default function PublishPage() {
       : null;
 
   const { publishListing } = useMarketplace();
+  const { token, user, requireAuth } = useAuth();
   const { push } = useToast();
   const navigate = useNavigate();
 
@@ -31,18 +34,17 @@ export default function PublishPage() {
   const [price, setPrice] = useState('');
   const [location, setLocation] = useState('');
   const [category, setCategory] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  // product
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState('');
   const [condition, setCondition] = useState('Buen estado');
   const [negotiable, setNegotiable] = useState(true);
   const [shipping, setShipping] = useState('persona');
-  // service
   const [priceMode, setPriceMode] = useState('hora');
   const [zone, setZone] = useState('');
   const [availableToday, setAvailableToday] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const categories = tipo === 'servicio' ? SERVICE_CATEGORIES : PRODUCT_CATEGORIES;
-
   const stepIndex = STEPS.indexOf(step);
 
   const canSubmit = useMemo(() => {
@@ -51,52 +53,73 @@ export default function PublishPage() {
     return Number.isFinite(n) && n > 0;
   }, [title, price, location, category]);
 
+  const ensureAuth = () => requireAuth('publish');
+
   const chooseTipo = (t) => {
+    if (!ensureAuth()) return;
     setTipo(t);
     setCategory('');
     setStep('datos');
   };
 
-  const submit = (e) => {
+  const onPickPhoto = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const submit = async (e) => {
     e.preventDefault();
     if (!canSubmit) return;
+    if (!ensureAuth() || !token) return;
+    if (!user?.phone) {
+      push('Añade tu WhatsApp en el perfil al registrarte para publicar.');
+      return;
+    }
 
-    const base = {
-      type: tipo,
-      title: title.trim(),
-      description: description.trim() || 'Sin descripción adicional.',
-      price: Number(price),
-      currency: 'PEN',
-      category,
-      location: location.trim(),
-      images: imageUrl.trim()
-        ? [imageUrl.trim()]
-        : [
-            tipo === 'servicio'
-              ? 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&q=80'
-              : 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=800&q=80',
-          ],
-    };
+    setBusy(true);
+    try {
+      let images = [];
+      if (photoFile) {
+        const uploaded = await uploadPhoto(token, photoFile);
+        if (uploaded?.url) images = [uploaded.url];
+      }
 
-    const listing =
-      tipo === 'servicio'
-        ? {
-            ...base,
-            priceMode,
-            zone: zone.trim() || location.trim(),
-            availableToday,
-          }
-        : {
-            ...base,
-            condition,
-            negotiable,
-            shipping,
-          };
+      const base = {
+        type: tipo,
+        title: title.trim(),
+        description: description.trim() || 'Sin descripción adicional.',
+        price: Number(price),
+        category,
+        location: location.trim(),
+        images,
+      };
 
-    const created = publishListing(listing);
-    setCreatedId(created.id);
-    setStep('listo');
-    push('Anuncio publicado');
+      const payload =
+        tipo === 'servicio'
+          ? {
+              ...base,
+              priceMode,
+              zone: zone.trim() || location.trim(),
+              availableToday,
+            }
+          : {
+              ...base,
+              condition,
+              negotiable,
+              shipping,
+            };
+
+      const created = await publishListing(payload);
+      setCreatedId(created.id);
+      setStep('listo');
+      push('Anuncio publicado');
+    } catch (err) {
+      push(err.message || 'No se pudo publicar');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -115,9 +138,9 @@ export default function PublishPage() {
         </h1>
         <p className="mt-2 text-sm text-[var(--ink-muted)]">
           {step === 'tipo' &&
-            'Elige pronto el tipo: productos y servicios tienen campos distintos.'}
-          {step === 'datos' && 'Solo lo esencial. Puedes mejorar el anuncio después.'}
-          {step === 'listo' && 'Tu anuncio ya está visible en PulgasYa (MVP local).'}
+            'Elige pronto el tipo: productos y servicios tienen campos distintos. Requiere cuenta.'}
+          {step === 'datos' && 'Solo lo esencial. Sube una foto real del anuncio.'}
+          {step === 'listo' && 'Tu anuncio ya está en la base de datos de PulgasYa.'}
         </p>
 
         <div className="mt-4 flex gap-2">
@@ -133,6 +156,15 @@ export default function PublishPage() {
 
         {step === 'tipo' && (
           <div className="mt-8 grid gap-4">
+            {!token && (
+              <button
+                type="button"
+                onClick={() => ensureAuth()}
+                className="rounded-xl border border-dashed border-[var(--brand)] bg-[var(--mint-wash)] px-4 py-3 text-left text-sm text-[var(--brand-deep)]"
+              >
+                Primero inicia sesión o crea una cuenta →
+              </button>
+            )}
             <button
               type="button"
               onClick={() => chooseTipo('producto')}
@@ -142,7 +174,7 @@ export default function PublishPage() {
                 Producto
               </span>
               <p className="mt-1 text-sm text-[var(--ink-muted)]">
-                Segunda mano: precio fijo, estado y entrega.
+                Segunda mano: precio en S/, estado y entrega.
               </p>
             </button>
             <button
@@ -169,6 +201,24 @@ export default function PublishPage() {
             >
               ← Cambiar a {tipo === 'servicio' ? 'producto' : 'servicio'}
             </button>
+
+            <Field label="Foto" htmlFor="pub-photo">
+              <input
+                id="pub-photo"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={onPickPhoto}
+                className="block w-full text-sm text-[var(--ink-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--mint-soft)] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-[var(--brand-deep)]"
+              />
+              {photoPreview && (
+                <img
+                  src={photoPreview}
+                  alt=""
+                  className="mt-3 h-40 w-full rounded-xl object-cover border border-[var(--line)]"
+                />
+              )}
+            </Field>
 
             <Field label="Título" htmlFor="pub-title">
               <input
@@ -286,7 +336,7 @@ export default function PublishPage() {
                     className="field-input"
                   >
                     <option value="persona">Sólo en persona</option>
-                    <option value="envio">Envío disponible</option>
+                    <option value="envio">Envío / delivery</option>
                   </select>
                 </Field>
                 <label className="flex items-center gap-2 text-sm">
@@ -322,22 +372,12 @@ export default function PublishPage() {
               />
             </Field>
 
-            <Field label="URL de foto (opcional en MVP)" htmlFor="pub-img">
-              <input
-                id="pub-img"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://…"
-                className="field-input"
-              />
-            </Field>
-
             <button
               type="submit"
-              disabled={!canSubmit}
+              disabled={!canSubmit || busy}
               className="w-full rounded-xl bg-[var(--coral)] py-3.5 text-sm font-semibold text-white transition hover:bg-[var(--coral-deep)] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Publicar anuncio
+              {busy ? 'Publicando…' : 'Publicar anuncio'}
             </button>
           </form>
         )}
@@ -345,7 +385,7 @@ export default function PublishPage() {
         {step === 'listo' && (
           <div className="mt-10 space-y-4 animate-hero-in text-center">
             <p className="text-[var(--ink-muted)]">
-              Ya puedes ver la ficha y recibir propuestas de precio.
+              Ya puedes ver la ficha y recibir propuestas de precio + WhatsApp.
             </p>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
               <Link
@@ -354,12 +394,13 @@ export default function PublishPage() {
               >
                 Ver anuncio
               </Link>
-              <Link
-                to="/"
+              <button
+                type="button"
+                onClick={() => navigate('/')}
                 className="rounded-xl border border-[var(--line)] px-5 py-3 text-sm font-semibold"
               >
                 Ir al inicio
-              </Link>
+              </button>
             </div>
           </div>
         )}

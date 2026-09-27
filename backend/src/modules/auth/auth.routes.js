@@ -4,6 +4,11 @@ import { authenticate } from '../../middleware/auth.js';
 export function createAuthRouter(controller) {
   const router = Router();
 
+  // POST /api/auth/register — registro email + contraseña
+  router.post('/register', controller.register);
+  // POST /api/auth/login — login email + contraseña
+  router.post('/login', controller.login);
+
   // POST /api/auth/social/:provider — login/registro con Google o Facebook (mock en dev)
   router.post('/social/:provider', controller.socialLogin);
 

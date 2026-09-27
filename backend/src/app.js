@@ -22,6 +22,11 @@ import { PaymentsController } from './modules/payments/payments.controller.js';
 import { createPaymentsRouter } from './modules/payments/payments.routes.js';
 import { createDevRouter } from './modules/dev/dev.routes.js';
 import { createUploadsRouter, MEDIA_DIR } from './modules/uploads/uploads.routes.js';
+import { ListingsController } from './modules/listings/listings.controller.js';
+import {
+  createListingsRouter,
+  createMyPulgasyaRouter,
+} from './modules/listings/listings.routes.js';
 
 export function createApp({
   auctionService,
@@ -31,6 +36,7 @@ export function createApp({
   settlementService,
   walletService,
   authService,
+  listingsService,
 }) {
   const app = express();
 
@@ -56,10 +62,14 @@ export function createApp({
   const settlementsController = new SettlementsController(settlementService);
   const walletController = new WalletController(walletService);
   const authController = new AuthController(authService);
+  const listingsController = new ListingsController(listingsService);
 
   app.get('/health', (_req, res) =>
-    res.json({ ok: true, service: 'martillazo-api', time: new Date().toISOString() }),
+    res.json({ ok: true, service: 'pulgasya-api', time: new Date().toISOString() }),
   );
+
+  app.use('/api/listings', createListingsRouter(listingsController));
+  app.use('/api/me', createMyPulgasyaRouter(listingsController));
 
   app.use('/api/auctions', createAuctionsRouter(auctionsController));
   app.use('/api/auctions', createSettlementsRouter(settlementsController));

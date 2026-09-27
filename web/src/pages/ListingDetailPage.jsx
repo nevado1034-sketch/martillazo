@@ -1,24 +1,78 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import SiteHeader from '../components/layout/SiteHeader.jsx';
 import SiteFooter from '../components/layout/SiteFooter.jsx';
 import OfferModal from '../components/listings/OfferModal.jsx';
 import { useMarketplace } from '../store/MarketplaceContext.jsx';
+import { useAuth } from '../store/AuthContext.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
 import {
   formatPrice,
   formatRating,
-  formatDistance,
   relativeDay,
 } from '../utils/format.js';
+import {
+  buildWhatsAppLink,
+  contactWhatsAppText,
+  offerWhatsAppText,
+} from '../utils/whatsapp.js';
 
 export default function ListingDetailPage() {
   const { id } = useParams();
-  const { getListing, makeOffer, offersForListing } = useMarketplace();
+  const { getListing, makeOffer, loadOffers } = useMarketplace();
+  const { user, token, requireAuth } = useAuth();
   const { push } = useToast();
-  const listing = getListing(id);
+
+  const [listing, setListing] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [offerOpen, setOfferOpen] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
+  const [offers, setOffers] = useState([]);
+  const [isSeller, setIsSeller] = useState(false);
+  const [lastOffer, setLastOffer] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getListing(id)
+      .then((data) => {
+        if (!cancelled) setListing(data);
+      })
+      .catch(() => {
+        if (!cancelled) setListing(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, getListing]);
+
+  useEffect(() => {
+    if (!token || !id) {
+      setOffers([]);
+      return;
+    }
+    loadOffers(id)
+      .then((data) => {
+        setOffers(data.offers || []);
+        setIsSeller(Boolean(data.isSeller));
+      })
+      .catch(() => setOffers([]));
+  }, [token, id, loadOffers, lastOffer]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <SiteHeader />
+        <main className="mx-auto flex flex-1 items-center px-4 text-[var(--ink-muted)]">
+          Cargando anuncio…
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  }
 
   if (!listing) {
     return (
@@ -41,7 +95,19 @@ export default function ListingDetailPage() {
     currency: listing.currency,
   });
   const images = listing.images?.length ? listing.images : [];
-  const offers = offersForListing(listing.id);
+
+  const waContact = buildWhatsAppLink({
+    phone: listing.seller?.phone,
+    text: contactWhatsAppText({
+      listingTitle: listing.title,
+      buyerName: user?.fullName,
+    }),
+  });
+
+  const openOffer = () => {
+    if (!requireAuth('offer')) return;
+    setOfferOpen(true);
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -71,13 +137,13 @@ export default function ListingDetailPage() {
               )}
             </div>
             {images.length > 1 && (
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex gap-2 overflow-x-auto">
                 {images.map((src, i) => (
                   <button
-                    key={src}
+                    key={src + i}
                     type="button"
                     onClick={() => setImgIdx(i)}
-                    className={`h-16 w-20 overflow-hidden rounded-lg border ${
+                    className={`h-16 w-20 shrink-0 overflow-hidden rounded-lg border ${
                       i === imgIdx
                         ? 'border-[var(--brand)]'
                         : 'border-[var(--line)] opacity-80 hover:opacity-100'
@@ -91,7 +157,7 @@ export default function ListingDetailPage() {
           </div>
 
           <div className="animate-hero-in">
-            <span className="inline-block rounded-lg bg-[var(--mint-soft)] px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--brand-deep)]">
+            <span className="inline-block rounded-md bg-[var(--mint-soft)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--brand-deep)]">
               {isService ? 'Servicio' : 'Producto'}
             </span>
             <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-[var(--ink)] sm:text-4xl">
@@ -106,26 +172,20 @@ export default function ListingDetailPage() {
 
             <div className="mt-5 flex flex-wrap gap-3 text-sm text-[var(--ink-muted)]">
               <span>{listing.location}</span>
-              {listing.distanceKm != null && (
-                <span>· {formatDistance(listing.distanceKm)}</span>
-              )}
               <span>· {relativeDay(listing.createdAt)}</span>
             </div>
 
-            {/* Trust */}
             <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ink-faint)]">
                 {isService ? 'Prestado por' : 'Vendido por'}
               </p>
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-[var(--ink)]">{listing.seller.name}</p>
-                  <p className="text-sm text-[var(--ink-muted)]">
-                    ★ {formatRating(listing.seller.rating)} · {listing.seller.reviews}{' '}
-                    valoraciones
-                    {listing.seller.verified ? ' · Verificado' : ''}
-                  </p>
-                </div>
+              <div className="mt-2">
+                <p className="font-semibold text-[var(--ink)]">{listing.seller.name}</p>
+                <p className="text-sm text-[var(--ink-muted)]">
+                  ★ {formatRating(listing.seller.rating)} · {listing.seller.reviews}{' '}
+                  valoraciones
+                  {listing.seller.verified ? ' · Verificado' : ''}
+                </p>
               </div>
             </div>
 
@@ -159,7 +219,7 @@ export default function ListingDetailPage() {
                 <div className="rounded-xl bg-[var(--surface)] p-3">
                   <dt className="text-[var(--ink-faint)]">Entrega</dt>
                   <dd className="mt-0.5 font-semibold">
-                    {listing.shipping === 'envio' ? 'Envío disponible' : 'Sólo en persona'}
+                    {listing.shipping === 'envio' ? 'Envío / delivery' : 'Sólo en persona'}
                   </dd>
                 </div>
               </dl>
@@ -173,32 +233,67 @@ export default function ListingDetailPage() {
             </div>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              {waContact ? (
+                <a
+                  href={waContact}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex-1 rounded-xl bg-[#25D366] px-5 py-3.5 text-center text-sm font-semibold text-white transition hover:brightness-95 hover:scale-[1.01] active:scale-[0.99]"
+                >
+                  WhatsApp al vendedor
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    push('Este vendedor aún no tiene WhatsApp en su perfil.')
+                  }
+                  className="flex-1 rounded-xl bg-[#25D366]/70 px-5 py-3.5 text-sm font-semibold text-white"
+                >
+                  WhatsApp no disponible
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => setOfferOpen(true)}
+                onClick={openOffer}
                 className="flex-1 rounded-xl bg-[var(--coral)] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[var(--coral-deep)] hover:scale-[1.01] active:scale-[0.99]"
               >
                 Proponer precio
               </button>
-              <button
-                type="button"
-                onClick={() =>
-                  push(
-                    isService
-                      ? 'Chat y reserva llegan en la siguiente fase.'
-                      : 'Chat llega en la siguiente fase. Mientras, propone un precio.',
-                  )
-                }
-                className="flex-1 rounded-xl border border-[var(--line)] bg-white px-5 py-3.5 text-sm font-semibold text-[var(--ink)] hover:border-[var(--brand-soft)]"
-              >
-                {isService ? 'Pedir presupuesto' : 'Contactar'}
-              </button>
             </div>
 
-            {offers.length > 0 && (
+            {lastOffer && (
+              <div className="mt-4 rounded-xl border border-[var(--mint-soft)] bg-[var(--mint-wash)] p-4 text-sm animate-rise">
+                <p className="font-semibold text-[var(--brand-deep)]">
+                  Oferta enviada: {formatPrice(lastOffer.amount)}
+                </p>
+                <p className="mt-1 text-[var(--ink-muted)]">
+                  El vendedor la ve en este anuncio. También puedes escribirle por WhatsApp.
+                </p>
+                {waContact && (
+                  <a
+                    href={buildWhatsAppLink({
+                      phone: listing.seller?.phone,
+                      text: offerWhatsAppText({
+                        listingTitle: listing.title,
+                        amount: lastOffer.amount,
+                        buyerName: user?.fullName,
+                      }),
+                    })}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-block font-semibold text-[#128C7E] hover:underline"
+                  >
+                    Enviar oferta por WhatsApp →
+                  </a>
+                )}
+              </div>
+            )}
+
+            {token && offers.length > 0 && (
               <div className="mt-8">
                 <h2 className="font-display text-lg font-bold">
-                  Ofertas en este anuncio ({offers.length})
+                  {isSeller ? 'Ofertas recibidas' : 'Tus ofertas'} ({offers.length})
                 </h2>
                 <ul className="mt-3 space-y-2">
                   {offers.map((o) => (
@@ -211,10 +306,23 @@ export default function ListingDetailPage() {
                       </span>
                       <span className="text-[var(--ink-muted)]">
                         {' '}
-                        · {o.buyerName} · {o.status}
+                        · {o.buyer?.name} · {o.status}
                       </span>
                       {o.message && (
                         <p className="mt-1 text-[var(--ink-muted)]">{o.message}</p>
+                      )}
+                      {isSeller && o.buyer?.phone && (
+                        <a
+                          href={buildWhatsAppLink({
+                            phone: o.buyer.phone,
+                            text: `Hola ${o.buyer.name}, vi tu oferta de S/ ${o.amount} por «${listing.title}» en PulgasYa.`,
+                          })}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 inline-block text-xs font-semibold text-[#128C7E] hover:underline"
+                        >
+                          Responder por WhatsApp
+                        </a>
                       )}
                     </li>
                   ))}
@@ -231,15 +339,15 @@ export default function ListingDetailPage() {
         listing={listing}
         open={offerOpen}
         onClose={() => setOfferOpen(false)}
-        onSubmit={({ amount, message, buyerName }) => {
-          makeOffer({
+        onSubmit={async ({ amount, message }) => {
+          const offer = await makeOffer({
             listingId: listing.id,
             amount,
             message,
-            buyerName,
           });
+          setLastOffer(offer);
           setOfferOpen(false);
-          push('Oferta enviada. El vendedor la verá aquí (MVP local).');
+          push('Oferta guardada. Puedes avisar al vendedor por WhatsApp.');
         }}
       />
     </div>
