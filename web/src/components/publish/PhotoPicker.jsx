@@ -1,15 +1,18 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+
+const CAMERA_ID = 'pulgasya-photo-camera';
+const GALLERY_ID = 'pulgasya-photo-gallery';
 
 /**
- * Selector de foto móvil: cámara y galería por separado.
- * - Galería: accept=image/* sin capture
- * - Cámara: accept=image/* + capture=environment
+ * Cámara y galería = inputs TOTALMENTE separados.
+ * En iOS/Android, <label htmlFor> abre mejor la cámara que input.click().
+ * - Tomar foto → capture="environment"
+ * - Galería → sin capture
  */
 export default function PhotoPicker({ file, previewUrl, error, onPick, onClear }) {
-  const galleryId = useId();
-  const cameraId = useId();
-  const galleryRef = useRef(null);
-  const cameraRef = useRef(null);
+  // Remount del input cámara tras cada uso para que capture no “se pegue”
+  const [cameraKey, setCameraKey] = useState(0);
+  const [galleryKey, setGalleryKey] = useState(0);
 
   useEffect(() => {
     return () => {
@@ -17,12 +20,11 @@ export default function PhotoPicker({ file, previewUrl, error, onPick, onClear }
     };
   }, [previewUrl]);
 
-  const handleChange = (e) => {
-    const next = e.target.files?.[0];
-    // permitir volver a elegir el mismo archivo
-    e.target.value = '';
+  const handleFile = (next, e) => {
+    if (e?.target) e.target.value = '';
     if (!next) return;
-    if (!next.type.startsWith('image/')) {
+    // Algunos móviles no rellenan type (p.ej. HEIC); aceptar si hay archivo
+    if (next.type && !next.type.startsWith('image/') && !/\.(jpe?g|png|webp|gif|heic|heif)$/i.test(next.name || '')) {
       onPick(null, 'El archivo debe ser una imagen (JPG, PNG, WEBP…).');
       return;
     }
@@ -35,39 +37,51 @@ export default function PhotoPicker({ file, previewUrl, error, onPick, onClear }
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-1 gap-2 xs:grid-cols-2 sm:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => cameraRef.current?.click()}
-          className="flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[var(--primary-celeste)] bg-[var(--mint-wash)] px-4 py-3 text-sm font-semibold text-[var(--primary-celeste)] active:bg-[var(--mint-soft)]"
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {/* Label nativo → input cámara (no button + .click()) */}
+        <label
+          htmlFor={CAMERA_ID}
+          className="flex min-h-[48px] cursor-pointer items-center justify-center gap-2 rounded-xl border border-[var(--primary-celeste)] bg-[var(--mint-wash)] px-4 py-3 text-center text-sm font-semibold text-[var(--primary-celeste)] active:bg-[var(--mint-soft)]"
         >
           Tomar foto
-        </button>
-        <button
-          type="button"
-          onClick={() => galleryRef.current?.click()}
-          className="flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-[var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[var(--text-dark)] active:bg-[var(--bg-light)]"
+        </label>
+        <label
+          htmlFor={GALLERY_ID}
+          className="flex min-h-[48px] cursor-pointer items-center justify-center gap-2 rounded-xl border border-[var(--line)] bg-white px-4 py-3 text-center text-sm font-semibold text-[var(--text-dark)] active:bg-[var(--bg-light)]"
         >
           Elegir de galería
-        </button>
+        </label>
       </div>
 
+      {/* Input cámara: SIEMPRE con capture; nunca reutilizar el de galería */}
       <input
-        ref={cameraRef}
-        id={cameraId}
+        key={`camera-${cameraKey}`}
+        id={CAMERA_ID}
+        name="pulgasya_camera"
         type="file"
         accept="image/*"
         capture="environment"
-        className="sr-only"
-        onChange={handleChange}
+        className="pointer-events-none absolute h-px w-px opacity-0"
+        tabIndex={-1}
+        onChange={(e) => {
+          handleFile(e.target.files?.[0], e);
+          setCameraKey((k) => k + 1);
+        }}
       />
+
+      {/* Input galería: SIN capture ni webkitdirectory */}
       <input
-        ref={galleryRef}
-        id={galleryId}
+        key={`gallery-${galleryKey}`}
+        id={GALLERY_ID}
+        name="pulgasya_gallery"
         type="file"
         accept="image/*"
-        className="sr-only"
-        onChange={handleChange}
+        className="pointer-events-none absolute h-px w-px opacity-0"
+        tabIndex={-1}
+        onChange={(e) => {
+          handleFile(e.target.files?.[0], e);
+          setGalleryKey((k) => k + 1);
+        }}
       />
 
       {previewUrl ? (
@@ -84,7 +98,10 @@ export default function PhotoPicker({ file, previewUrl, error, onPick, onClear }
             </p>
             <button
               type="button"
-              onClick={onClear}
+              onClick={(e) => {
+                e.preventDefault();
+                onClear();
+              }}
               className="shrink-0 text-xs font-semibold text-[var(--cta-orange)]"
             >
               Quitar
@@ -93,7 +110,7 @@ export default function PhotoPicker({ file, previewUrl, error, onPick, onClear }
         </div>
       ) : (
         <p className="text-xs text-[var(--ink-faint)]">
-          Opcional. En el celular puedes usar la cámara o la galería.
+          En el celular, «Tomar foto» abre la cámara; «Elegir de galería» abre tus fotos.
         </p>
       )}
 
