@@ -20,6 +20,7 @@ import { createWalletRouter } from './modules/wallet/wallet.routes.js';
 import { createGuaranteesRouter } from './modules/payments/guarantees.routes.js';
 import { PaymentsController } from './modules/payments/payments.controller.js';
 import { createPaymentsRouter } from './modules/payments/payments.routes.js';
+import { createGatewayStubRouter } from './modules/payments/gateway.stub.js';
 import { createDevRouter } from './modules/dev/dev.routes.js';
 import { createUploadsRouter, MEDIA_DIR } from './modules/uploads/uploads.routes.js';
 import { ListingsController } from './modules/listings/listings.controller.js';
@@ -27,6 +28,8 @@ import {
   createListingsRouter,
   createMyPulgasyaRouter,
 } from './modules/listings/listings.routes.js';
+import { EscrowController } from './modules/escrow/escrow.controller.js';
+import { createEscrowRouter } from './modules/escrow/escrow.routes.js';
 
 export function createApp({
   auctionService,
@@ -37,6 +40,7 @@ export function createApp({
   walletService,
   authService,
   listingsService,
+  escrowService,
 }) {
   const app = express();
 
@@ -66,6 +70,7 @@ export function createApp({
   const walletController = new WalletController(walletService);
   const authController = new AuthController(authService);
   const listingsController = new ListingsController(listingsService);
+  const escrowController = new EscrowController(escrowService);
 
   app.get('/health', (_req, res) =>
     res.json({ ok: true, service: 'pulgasya-api', time: new Date().toISOString() }),
@@ -73,6 +78,7 @@ export function createApp({
 
   app.use('/api/listings', createListingsRouter(listingsController));
   app.use('/api/me', createMyPulgasyaRouter(listingsController));
+  app.use('/api/escrow', createEscrowRouter(escrowController));
 
   app.use('/api/auctions', createAuctionsRouter(auctionsController));
   app.use('/api/auctions', createSettlementsRouter(settlementsController));
@@ -81,6 +87,7 @@ export function createApp({
   app.use('/api/categories', createCategoriesRouter(auctionsController));
   app.use('/api/auctions', createBidsRouter(bidsController));
   app.use('/api/payments', createPaymentsRouter(paymentsController));
+  app.use('/api/payments', createGatewayStubRouter());
   app.use('/api/guarantees', createGuaranteesRouter(guaranteesController));
   app.use('/api/uploads', createUploadsRouter());
   app.use('/api/auth', createAuthRouter(authController));

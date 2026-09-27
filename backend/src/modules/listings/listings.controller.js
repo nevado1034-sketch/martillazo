@@ -19,7 +19,9 @@ export class ListingsController {
 
   get = async (req, res, next) => {
     try {
-      const data = await this.service.getById(req.params.id);
+      const data = await this.service.getById(req.params.id, {
+        viewerId: req.user?.id ?? null,
+      });
       return res.json({ data });
     } catch (err) {
       next(err);
@@ -76,6 +78,28 @@ export class ListingsController {
   myListings = async (req, res, next) => {
     try {
       const data = await this.service.myListings({ sellerId: req.user.id });
+      return res.json({ data });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  mySales = async (req, res, next) => {
+    try {
+      const data = await this.service.mySales({ sellerId: req.user.id });
+      return res.json({ data });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  respondOffer = async (req, res, next) => {
+    try {
+      const data = await this.service.respondOffer({
+        offerId: req.params.offerId,
+        sellerId: req.user.id,
+        action: req.body?.action || req.params.action,
+      });
       return res.json({ data });
     } catch (err) {
       next(err);

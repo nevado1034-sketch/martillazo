@@ -1,10 +1,11 @@
 import { AppError } from '../../utils/errors.js';
 
-function mapSeller(row) {
+function mapSeller(row, { revealPhone = true } = {}) {
   return {
     id: row.seller_id,
-    name: row.seller_name,
-    phone: row.seller_phone,
+    name: row.seller_display_name || row.seller_name,
+    phone: revealPhone ? row.seller_phone : null,
+    phoneVisibility: row.seller_phone_visibility || 'public',
     rating: row.seller_rating != null ? Number(row.seller_rating) : 5,
     reviews: row.seller_reviews != null ? Number(row.seller_reviews) : 0,
     verified: row.seller_verified === true,
@@ -55,7 +56,9 @@ function mapOffer(row) {
 const LISTING_SELECT = `
   SELECT l.*,
          u.full_name AS seller_name,
+         COALESCE(u.display_name, u.full_name) AS seller_display_name,
          u.phone AS seller_phone,
+         COALESCE(u.phone_visibility, 'public') AS seller_phone_visibility,
          4.8::float AS seller_rating,
          12::int AS seller_reviews,
          (u.kyc_status = 'VERIFIED') AS seller_verified
@@ -66,6 +69,7 @@ const LISTING_SELECT = `
 export class ListingsService {
   constructor({ pool }) {
     this.pool = pool;
+    this.escrowService = null;
   }
 
   async list({ tipo, q, cat, limit = 48 } = {}) {
@@ -97,10 +101,12 @@ export class ListingsService {
        LIMIT $${i}`,
       params,
     );
-    return rows.map(mapListing);
+    return rows.map((row) =>
+      this.#mapListingWithPhone(row, { viewerId: null, hasOffer: false }),
+    );
   }
 
-  async getById(id) {
+  async getById(id, { viewerId = null } = {}) {
     const { rows: [row] } = await this.pool.query(
       `${LISTING_SELECT} WHERE l.id = $1`,
       [id],
@@ -112,7 +118,28 @@ export class ListingsService {
         status: 404,
       });
     }
-    return mapListing(row);
+    let hasOffer = false;
+    if (viewerId && viewerId !== row.seller_id) {
+      const { rows: offers } = await this.pool.query(
+        `SELECT 1 FROM pulgasya_offers
+         WHERE listing_id = $1 AND buyer_id = $2 LIMIT 1`,
+        [id, viewerId],
+      );
+      hasOffer = offers.length > 0;
+    }
+    return this.#mapListingWithPhone(row, { viewerId, hasOffer });
+  }
+
+  #mapListingWithPhone(row, { viewerId, hasOffer }) {
+    const visibility = row.seller_phone_visibility || 'public';
+    const isSeller = viewerId && viewerId === row.seller_id;
+    let revealPhone = false;
+    if (isSeller || visibility === 'public') revealPhone = true;
+    else if (visibility === 'on_offer' && hasOffer) revealPhone = true;
+    // nobody → never for others
+    const listing = mapListing(row);
+    listing.seller = mapSeller(row, { revealPhone });
+    return listing;
   }
 
   async create({ sellerId, input }) {
@@ -198,7 +225,7 @@ export class ListingsService {
   }
 
   async listOffersForListing({ listingId, userId }) {
-    const listing = await this.getById(listingId);
+    const listing = await this.getById(listingId, { viewerId: userId });
     const isSeller = listing.seller.id === userId;
 
     const { rows } = await this.pool.query(
@@ -218,7 +245,7 @@ export class ListingsService {
   }
 
   async createOffer({ listingId, buyerId, amount, message }) {
-    const listing = await this.getById(listingId);
+    const listing = await this.getById(listingId, { viewerId: buyerId });
     if (listing.seller.id === buyerId) {
       throw new AppError({
         code: 'SELF_OFFER',
@@ -295,6 +322,131 @@ export class ListingsService {
        ORDER BY l.created_at DESC`,
       [sellerId],
     );
-    return rows.map(mapListing);
+    return rows.map((row) =>
+      this.#mapListingWithPhone(row, { viewerId: sellerId, hasOffer: false }),
+    );
+  }
+
+  /** Ofertas recibidas en anuncios del vendedor (Mis ventas). */
+  async mySales({ sellerId }) {
+    const { rows } = await this.pool.query(
+      `SELECT o.*,
+              u.full_name AS buyer_name,
+              u.phone AS buyer_phone,
+              l.title AS listing_title,
+              l.price AS listing_price,
+              l.status AS listing_status,
+              l.type AS listing_type
+       FROM pulgasya_offers o
+       JOIN users u ON u.id = o.buyer_id
+       JOIN pulgasya_listings l ON l.id = o.listing_id
+       WHERE l.seller_id = $1
+       ORDER BY
+         CASE o.status WHEN 'pendiente' THEN 0 WHEN 'aceptada' THEN 1 ELSE 2 END,
+         o.created_at DESC`,
+      [sellerId],
+    );
+    return rows.map((row) => ({
+      ...mapOffer(row),
+      listingPrice: Number(row.listing_price),
+      listingStatus: row.listing_status,
+      listingType: row.listing_type,
+    }));
+  }
+
+  async respondOffer({ offerId, sellerId, action }) {
+    const next =
+      action === 'accept' || action === 'aceptar'
+        ? 'aceptada'
+        : action === 'reject' || action === 'rechazar'
+          ? 'rechazada'
+          : null;
+    if (!next) {
+      throw new AppError({
+        code: 'VALIDATION_ERROR',
+        message: 'Acción inválida (aceptar o rechazar)',
+        status: 422,
+      });
+    }
+
+    const { rows: [offer] } = await this.pool.query(
+      `SELECT o.*, l.seller_id, l.title AS listing_title
+       FROM pulgasya_offers o
+       JOIN pulgasya_listings l ON l.id = o.listing_id
+       WHERE o.id = $1`,
+      [offerId],
+    );
+    if (!offer) {
+      throw new AppError({
+        code: 'OFFER_NOT_FOUND',
+        message: 'Oferta no encontrada',
+        status: 404,
+      });
+    }
+    if (offer.seller_id !== sellerId) {
+      throw new AppError({
+        code: 'FORBIDDEN',
+        message: 'No puedes gestionar esta oferta',
+        status: 403,
+      });
+    }
+
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        `UPDATE pulgasya_offers SET status = $1 WHERE id = $2`,
+        [next, offerId],
+      );
+      if (next === 'aceptada') {
+        await client.query(
+          `UPDATE pulgasya_offers SET status = 'rechazada'
+           WHERE listing_id = $1 AND id <> $2 AND status = 'pendiente'`,
+          [offer.listing_id, offerId],
+        );
+        await client.query(
+          `UPDATE pulgasya_listings SET status = 'sold' WHERE id = $1`,
+          [offer.listing_id],
+        );
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    const { rows: [full] } = await this.pool.query(
+      `SELECT o.*,
+              u.full_name AS buyer_name,
+              u.phone AS buyer_phone,
+              l.title AS listing_title
+       FROM pulgasya_offers o
+       JOIN users u ON u.id = o.buyer_id
+       JOIN pulgasya_listings l ON l.id = o.listing_id
+       WHERE o.id = $1`,
+      [offerId],
+    );
+    const mapped = mapOffer(full);
+
+    // Pedido en custodia pendiente de pago (el comprador paga a PulgasYa, no al vendedor)
+    if (next === 'aceptada' && this.escrowService) {
+      try {
+        const order = await this.escrowService.createFromOffer({
+          offerId,
+          actorId: sellerId,
+        });
+        mapped.orderId = order.id;
+        mapped.orderStatus = order.status;
+      } catch (err) {
+        console.warn('[listings] no se creó orden escrow:', err.message);
+      }
+    }
+    return mapped;
+  }
+
+  setEscrowService(escrowService) {
+    this.escrowService = escrowService;
   }
 }

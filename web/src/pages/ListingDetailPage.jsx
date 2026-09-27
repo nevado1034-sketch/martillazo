@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import SiteHeader from '../components/layout/SiteHeader.jsx';
 import SiteFooter from '../components/layout/SiteFooter.jsx';
 import OfferModal from '../components/listings/OfferModal.jsx';
@@ -16,12 +16,15 @@ import {
   contactWhatsAppText,
   offerWhatsAppText,
 } from '../utils/whatsapp.js';
+import { buyNow } from '../api/escrow.js';
 
 export default function ListingDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { getListing, makeOffer, loadOffers } = useMarketplace();
   const { user, token, requireAuth } = useAuth();
   const { push } = useToast();
+  const [buyBusy, setBuyBusy] = useState(false);
 
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -90,6 +93,9 @@ export default function ListingDetailPage() {
   }
 
   const isService = listing.type === 'servicio';
+  const amSeller = Boolean(
+    isSeller || (user?.id && user.id === listing.seller?.id),
+  );
   const priceLabel = formatPrice(listing.price, {
     mode: isService ? listing.priceMode : undefined,
     currency: listing.currency,
@@ -232,7 +238,29 @@ export default function ListingDetailPage() {
               </p>
             </div>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              {!amSeller && listing.status === 'active' && (
+                <button
+                  type="button"
+                  disabled={buyBusy}
+                  onClick={async () => {
+                    if (!requireAuth('offer')) return;
+                    setBuyBusy(true);
+                    try {
+                      const order = await buyNow(token, listing.id);
+                      push('Pedido creado — paga en custodia PulgasYa');
+                      navigate(`/pedido/${order.id}`);
+                    } catch (err) {
+                      push(err.message || 'No se pudo crear el pedido');
+                    } finally {
+                      setBuyBusy(false);
+                    }
+                  }}
+                  className="flex-1 rounded-xl bg-[var(--cta-orange)] px-5 py-3.5 text-sm font-semibold text-white transition hover:brightness-95 disabled:opacity-50"
+                >
+                  Comprar ahora (custodia)
+                </button>
+              )}
               {waContact ? (
                 <a
                   href={waContact}
@@ -256,11 +284,15 @@ export default function ListingDetailPage() {
               <button
                 type="button"
                 onClick={openOffer}
-                className="flex-1 rounded-xl bg-[var(--cta-orange)] px-5 py-3.5 text-sm font-semibold text-white transition hover:brightness-95 hover:scale-[1.01] active:scale-[0.99]"
+                className="flex-1 rounded-xl border border-[var(--primary-celeste)] px-5 py-3.5 text-sm font-semibold text-[var(--primary-celeste)] transition hover:bg-[var(--mint-wash)]"
               >
                 Proponer precio
               </button>
             </div>
+            <p className="mt-2 text-xs text-[var(--ink-faint)]">
+              El pago va a custodia PulgasYa (no al vendedor). Comisión 10% al
+              liberar. Sandbox hasta conectar Culqi/Niubiz/MP.
+            </p>
 
             {lastOffer && (
               <div className="mt-4 rounded-xl border border-[var(--mint-soft)] bg-[var(--mint-wash)] p-4 text-sm animate-rise">

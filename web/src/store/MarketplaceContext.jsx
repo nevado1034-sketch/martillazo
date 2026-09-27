@@ -54,12 +54,10 @@ export function MarketplaceProvider({ children }) {
 
   const getListing = useCallback(
     async (id) => {
-      const cached = listings.find((l) => l.id === id);
-      if (cached) return cached;
-      const data = await fetchListing(id);
+      const data = await fetchListing(id, token);
       return normalizeListing(data);
     },
-    [listings],
+    [token],
   );
 
   const publishListing = useCallback(

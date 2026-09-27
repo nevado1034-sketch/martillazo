@@ -20,8 +20,15 @@ export default function SiteFooter() {
           <Link to="/publicar" className="hover:text-[var(--ink)]">
             Publicar
           </Link>
-          <span>Privacidad</span>
-          <span>Cookies</span>
+          <Link to="/ayuda" className="hover:text-[var(--ink)]">
+            Ayuda
+          </Link>
+          <Link to="/terminos" className="hover:text-[var(--ink)]">
+            Términos
+          </Link>
+          <Link to="/privacidad" className="hover:text-[var(--ink)]">
+            Privacidad
+          </Link>
         </div>
       </div>
     </footer>

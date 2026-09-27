@@ -2,6 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { greetingFirstName } from '../../utils/userDisplay.js';
 
+const LINKS = [
+  { to: '/mis-anuncios', label: 'Mis anuncios' },
+  { to: '/mis-ofertas', label: 'Mis ofertas' },
+  { to: '/mis-ventas', label: 'Mis ventas' },
+  { to: '/mis-pedidos', label: 'Mis pedidos (custodia)' },
+  { to: '/publicar', label: 'Publicar', accent: true },
+  { to: '/configuracion', label: 'Configuración' },
+  { to: '/ayuda', label: 'Ayuda / contacto' },
+  { to: '/terminos', label: 'Términos' },
+  { to: '/privacidad', label: 'Privacidad' },
+];
+
 export default function AccountMenu({ user, onLogout }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
@@ -58,14 +70,16 @@ export default function AccountMenu({ user, onLogout }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-[60] mt-2 w-[min(16rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-[var(--line)] bg-white py-1 shadow-lg animate-fade-in"
+          className="absolute right-0 z-[60] mt-2 max-h-[min(70vh,28rem)] w-[min(16rem,calc(100vw-1.5rem))] overflow-y-auto rounded-xl border border-[var(--line)] bg-white py-1 shadow-lg animate-fade-in"
         >
           <p className="truncate border-b border-[var(--line)] px-3 py-2 text-xs text-[var(--ink-faint)]">
             {user.email}
           </p>
-          <MenuItem onClick={() => go('/mis-anuncios')}>Mis anuncios</MenuItem>
-          <MenuItem onClick={() => go('/mis-ofertas')}>Mis ofertas</MenuItem>
-          <MenuItem onClick={() => go('/publicar')}>Publicar</MenuItem>
+          {LINKS.map((item) => (
+            <MenuItem key={item.to} onClick={() => go(item.to)}>
+              {item.label}
+            </MenuItem>
+          ))}
           <button
             type="button"
             role="menuitem"
@@ -104,27 +118,20 @@ export function AccountMenuMobile({ user, onLogout, onNavigate }) {
       <p className="font-semibold text-[var(--primary-celeste)]">Hola {name}</p>
       <p className="mt-0.5 truncate text-xs text-[var(--ink-faint)]">{user.email}</p>
       <div className="mt-3 flex flex-col gap-1">
-        <Link
-          to="/mis-anuncios"
-          className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-dark)] active:bg-white"
-          onClick={onNavigate}
-        >
-          Mis anuncios
-        </Link>
-        <Link
-          to="/mis-ofertas"
-          className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--text-dark)] active:bg-white"
-          onClick={onNavigate}
-        >
-          Mis ofertas
-        </Link>
-        <Link
-          to="/publicar"
-          className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--cta-orange)] active:bg-white"
-          onClick={onNavigate}
-        >
-          Publicar
-        </Link>
+        {LINKS.map((item) => (
+          <Link
+            key={item.to}
+            to={item.to}
+            className={`flex min-h-[44px] items-center rounded-lg px-3 py-2.5 text-sm font-medium active:bg-white ${
+              item.accent
+                ? 'text-[var(--cta-orange)]'
+                : 'text-[var(--text-dark)]'
+            }`}
+            onClick={onNavigate}
+          >
+            {item.label}
+          </Link>
+        ))}
         <button
           type="button"
           className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[var(--ink-muted)] active:bg-white"

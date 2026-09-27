@@ -28,3 +28,14 @@ export function authenticate(req, res, next) {
   req.user = { id: payload.sub, role: payload.role };
   next();
 }
+
+/** Autenticación opcional: si hay Bearer válido, rellena req.user; si no, sigue. */
+export function optionalAuth(req, _res, next) {
+  const header = req.headers.authorization ?? '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  const payload = verifyToken(token);
+  if (payload) {
+    req.user = { id: payload.sub, role: payload.role };
+  }
+  next();
+}

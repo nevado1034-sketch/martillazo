@@ -150,6 +150,21 @@ export default function AuthModal() {
           >
             {busy ? 'Espera…' : mode === 'login' ? 'Entrar' : 'Crear cuenta'}
           </button>
+          {mode === 'login' && (
+            <p className="text-center text-xs text-[var(--ink-faint)]">
+              <a
+                href="/recuperar"
+                className="text-[var(--primary-celeste)] hover:underline"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setAuthOpen(false);
+                  window.location.href = '/recuperar';
+                }}
+              >
+                ¿Olvidaste tu contraseña?
+              </a>
+            </p>
+          )}
         </form>
       </div>
     </div>

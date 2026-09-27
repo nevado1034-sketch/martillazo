@@ -7,12 +7,15 @@ import {
   useState,
 } from 'react';
 import {
+  changePassword as apiChangePassword,
   clearSession,
+  deactivateAccount as apiDeactivate,
   fetchMe,
   loadSession,
   login as apiLogin,
   register as apiRegister,
   saveSession,
+  submitKyc as apiSubmitKyc,
   updateMe as apiUpdateMe,
 } from '../api/auth.js';
 
@@ -89,6 +92,39 @@ export function AuthProvider({ children }) {
     [session],
   );
 
+  const changePassword = useCallback(
+    async ({ currentPassword, newPassword }) => {
+      if (!session?.token) throw new Error('Sin sesión');
+      return apiChangePassword(session.token, {
+        currentPassword,
+        newPassword,
+      });
+    },
+    [session],
+  );
+
+  const deactivateAccount = useCallback(
+    async ({ password, confirm }) => {
+      if (!session?.token) throw new Error('Sin sesión');
+      await apiDeactivate(session.token, { password, confirm });
+      clearSession();
+      setSession(null);
+    },
+    [session],
+  );
+
+  const submitKyc = useCallback(
+    async (input) => {
+      if (!session?.token) throw new Error('Sin sesión');
+      const user = await apiSubmitKyc(session.token, input);
+      const next = { token: session.token, user };
+      saveSession(next);
+      setSession(next);
+      return user;
+    },
+    [session],
+  );
+
   const requireAuth = useCallback((intent) => {
     if (session?.token) return true;
     setAuthIntent(intent || null);
@@ -105,6 +141,9 @@ export function AuthProvider({ children }) {
       register,
       logout,
       updateProfile,
+      changePassword,
+      deactivateAccount,
+      submitKyc,
       requireAuth,
       authOpen,
       setAuthOpen,
@@ -118,6 +157,9 @@ export function AuthProvider({ children }) {
       register,
       logout,
       updateProfile,
+      changePassword,
+      deactivateAccount,
+      submitKyc,
       requireAuth,
       authOpen,
       authIntent,

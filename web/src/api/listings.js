@@ -9,8 +9,8 @@ export async function fetchListings(params = {}) {
   return apiFetch(`/api/listings${q ? `?${q}` : ''}`);
 }
 
-export async function fetchListing(id) {
-  return apiFetch(`/api/listings/${id}`);
+export async function fetchListing(id, token) {
+  return apiFetch(`/api/listings/${id}`, token ? { token } : {});
 }
 
 export async function createListing(token, input) {
