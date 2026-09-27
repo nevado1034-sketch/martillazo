@@ -5,7 +5,7 @@ export default function SiteFooter() {
     <footer className="mt-auto border-t border-[var(--line)] bg-white/70">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="font-display text-lg font-bold text-[var(--brand)]">PulgasYa</p>
+          <p className="font-display text-lg font-bold text-[var(--primary-celeste)]">PulgasYa</p>
           <p className="mt-1 max-w-sm text-sm text-[var(--ink-muted)]">
             Segunda mano y servicios cerca de ti. Compra, vende y contrata con confianza.
           </p>

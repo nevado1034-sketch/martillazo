@@ -9,6 +9,7 @@ import BrowsePage from './pages/BrowsePage.jsx';
 import ListingDetailPage from './pages/ListingDetailPage.jsx';
 import PublishPage from './pages/PublishPage.jsx';
 import MyOffersPage from './pages/MyOffersPage.jsx';
+import AuthEntryPage from './pages/AuthEntryPage.jsx';
 
 export default function App() {
   return (
@@ -22,6 +23,9 @@ export default function App() {
               <Route path="/anuncio/:id" element={<ListingDetailPage />} />
               <Route path="/publicar" element={<PublishPage />} />
               <Route path="/mis-ofertas" element={<MyOffersPage />} />
+              <Route path="/registro" element={<AuthEntryPage mode="register" />} />
+              <Route path="/entrar" element={<AuthEntryPage mode="login" />} />
+              <Route path="/login" element={<AuthEntryPage mode="login" />} />
             </Routes>
             <AuthModal />
             <CookieBanner />

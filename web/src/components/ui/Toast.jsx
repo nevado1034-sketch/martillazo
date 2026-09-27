@@ -33,7 +33,7 @@ export function ToastProvider({ children }) {
           <div
             key={t.id}
             role="status"
-            className="pointer-events-auto rounded-xl bg-[var(--ink)] px-4 py-3 text-sm text-white shadow-lg animate-toast-in"
+            className="pointer-events-auto rounded-xl bg-[var(--text-dark)] px-4 py-3 text-sm text-white shadow-lg animate-toast-in"
           >
             {t.message}
           </div>

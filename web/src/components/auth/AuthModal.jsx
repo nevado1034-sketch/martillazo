@@ -16,11 +16,11 @@ export default function AuthModal() {
 
   useEffect(() => {
     if (authOpen) {
-      setMode('login');
+      setMode(authIntent === 'publish' || authIntent === 'register' ? 'register' : 'login');
       setError('');
       setPassword('');
     }
-  }, [authOpen]);
+  }, [authOpen, authIntent]);
 
   if (!authOpen) return null;
 

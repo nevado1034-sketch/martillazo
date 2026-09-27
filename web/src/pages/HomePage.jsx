@@ -43,7 +43,7 @@ export default function HomePage() {
             className="absolute inset-0 opacity-[0.4]"
             style={{
               backgroundImage:
-                'radial-gradient(circle at 18% 22%, rgba(255,255,255,0.55) 0, transparent 42%), radial-gradient(circle at 88% 8%, rgba(45,212,191,0.28) 0, transparent 36%)',
+                'radial-gradient(circle at 18% 22%, rgba(255,255,255,0.55) 0, transparent 42%), radial-gradient(circle at 88% 8%, rgba(58,124,165,0.22) 0, transparent 36%)',
             }}
             aria-hidden="true"
           />
