@@ -55,7 +55,7 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-r from-[var(--surface)] via-[color-mix(in_srgb,var(--surface)_80%,transparent)] to-transparent" />
 
           <div className="relative mx-auto flex min-h-[min(92svh,720px)] max-w-6xl flex-col justify-center px-4 py-14 sm:py-20">
-            <p className="font-display animate-hero-in text-5xl font-bold tracking-tight text-[var(--brand)] sm:text-6xl md:text-7xl">
+            <p className="font-display animate-hero-in text-5xl font-bold tracking-tight text-[var(--primary-celeste)] sm:text-6xl md:text-7xl">
               PulgasYa
             </p>
             <h1 className="mt-4 max-w-xl animate-hero-in font-display text-3xl font-semibold leading-[1.15] text-[var(--ink)] delay-100 sm:text-4xl md:text-[2.75rem]">
@@ -68,13 +68,13 @@ export default function HomePage() {
             <div className="mt-8 flex animate-hero-in flex-wrap gap-3 delay-300">
               <a
                 href="#cerca"
-                className="rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--brand-deep)] hover:scale-[1.02] active:scale-[0.98]"
+                className="rounded-xl bg-[var(--primary-celeste)] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-hover)] hover:scale-[1.02] active:scale-[0.98]"
               >
                 Buscar
               </a>
               <Link
                 to="/publicar"
-                className="rounded-xl border border-[var(--brand)] bg-white/85 px-5 py-3 text-sm font-semibold text-[var(--brand)] backdrop-blur transition hover:bg-white hover:scale-[1.02] active:scale-[0.98]"
+                className="rounded-xl bg-[var(--cta-orange)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-95 hover:scale-[1.02] active:scale-[0.98]"
               >
                 Publicar
               </Link>
@@ -105,7 +105,7 @@ export default function HomePage() {
                 />
                 <button
                   type="submit"
-                  className="bg-[var(--brand)] px-4 text-sm font-semibold text-white hover:bg-[var(--brand-deep)]"
+                  className="bg-[var(--primary-celeste)] px-4 text-sm font-semibold text-white hover:bg-[var(--primary-hover)]"
                 >
                   Buscar
                 </button>

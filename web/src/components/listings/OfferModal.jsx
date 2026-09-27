@@ -123,7 +123,7 @@ export default function OfferModal({ listing, open, onClose, onSubmit }) {
             <button
               type="submit"
               disabled={busy}
-              className="flex-1 rounded-xl bg-[var(--coral)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--coral-deep)] disabled:opacity-60"
+              className="flex-1 rounded-xl bg-[var(--cta-orange)] px-4 py-2.5 text-sm font-semibold text-white hover:brightness-95 disabled:opacity-60"
             >
               {busy ? 'Enviando…' : 'Enviar oferta'}
             </button>

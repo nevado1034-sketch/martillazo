@@ -256,7 +256,7 @@ export default function ListingDetailPage() {
               <button
                 type="button"
                 onClick={openOffer}
-                className="flex-1 rounded-xl bg-[var(--coral)] px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-[var(--coral-deep)] hover:scale-[1.01] active:scale-[0.99]"
+                className="flex-1 rounded-xl bg-[var(--cta-orange)] px-5 py-3.5 text-sm font-semibold text-white transition hover:brightness-95 hover:scale-[1.01] active:scale-[0.99]"
               >
                 Proponer precio
               </button>

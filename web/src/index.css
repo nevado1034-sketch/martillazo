@@ -3,23 +3,31 @@
 @tailwind utilities;
 
 :root {
-  --brand: #0d7377;
-  --brand-deep: #095456;
-  --brand-soft: #7bc4c6;
-  --mint: #2dd4bf;
-  --mint-soft: #ccfbf1;
-  --mint-wash: #e6faf6;
-  --coral: #e85d4c;
-  --coral-deep: #c94838;
-  --coral-wash: #fff1ee;
-  --ink: #12201f;
-  --ink-muted: #4a5c5a;
-  --ink-faint: #7a8f8c;
-  --surface: #f3faf8;
-  --line: #d5e6e3;
-  --hero-from: #d8f5ef;
-  --hero-via: #e8f7f0;
-  --hero-to: #fff4ec;
+  /* Paleta oficial PulgasYa (Jose) */
+  --primary-celeste: #3a7ca5;
+  --primary-hover: #2f6688;
+  --cta-orange: #ff7a59;
+  --bg-light: #f7f9fb;
+  --text-dark: #1f2937;
+
+  /* Aliases usados en componentes */
+  --brand: var(--primary-celeste);
+  --brand-deep: var(--primary-hover);
+  --brand-soft: #7aa9c4;
+  --mint: #5b9bc0;
+  --mint-soft: #d7e8f2;
+  --mint-wash: #eaf2f7;
+  --coral: var(--cta-orange);
+  --coral-deep: #e86545;
+  --coral-wash: #fff1ed;
+  --ink: var(--text-dark);
+  --ink-muted: #4b5563;
+  --ink-faint: #9ca3af;
+  --surface: var(--bg-light);
+  --line: #d9e2ea;
+  --hero-from: #d9eaf4;
+  --hero-via: #e8f1f7;
+  --hero-to: #fff2ed;
 }
 
 @layer base {
@@ -31,12 +39,12 @@
     margin: 0;
     min-height: 100vh;
     font-family: 'Figtree', system-ui, sans-serif;
-    color: var(--ink);
-    background-color: var(--surface);
+    color: var(--text-dark);
+    background-color: var(--bg-light);
     background-image:
       radial-gradient(ellipse 80% 50% at 10% -10%, var(--hero-from), transparent 55%),
       radial-gradient(ellipse 60% 40% at 100% 0%, var(--hero-to), transparent 50%),
-      linear-gradient(180deg, var(--surface), #ffffff 40%, var(--surface));
+      linear-gradient(180deg, var(--bg-light), #ffffff 40%, var(--bg-light));
     -webkit-font-smoothing: antialiased;
   }
 
@@ -47,7 +55,7 @@
 
 @layer components {
   .field-input {
-    @apply w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--mint-soft)];
+    @apply w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none transition focus:border-[var(--primary-celeste)] focus:ring-2 focus:ring-[var(--mint-soft)];
   }
 
   .bg-hero-atmosphere {
@@ -61,6 +69,14 @@
 
   .font-display {
     font-family: 'Syne', 'Figtree', sans-serif;
+  }
+
+  .btn-primary {
+    @apply rounded-xl bg-[var(--primary-celeste)] text-sm font-semibold text-white transition hover:bg-[var(--primary-hover)];
+  }
+
+  .btn-cta {
+    @apply rounded-xl bg-[var(--cta-orange)] text-sm font-semibold text-white transition hover:brightness-95;
   }
 }
 

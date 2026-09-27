@@ -22,7 +22,7 @@ export default function TypeToggle({ value, onChange, className = '' }) {
             onClick={() => onChange(opt.id)}
             className={`rounded-lg px-3.5 py-2 text-sm font-semibold transition ${
               active
-                ? 'bg-[var(--brand)] text-white shadow-sm'
+                ? 'bg-[var(--primary-celeste)] text-white shadow-sm'
                 : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
             }`}
           >

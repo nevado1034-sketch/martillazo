@@ -29,7 +29,7 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
       <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2.5 sm:gap-4 sm:px-4 sm:py-3">
         <Link
           to="/"
-          className="shrink-0 font-display text-xl font-bold tracking-tight text-[var(--brand)] sm:text-2xl"
+          className="shrink-0 font-display text-xl font-bold tracking-tight text-[var(--primary-celeste)] sm:text-2xl"
         >
           PulgasYa
         </Link>
@@ -48,7 +48,7 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
             />
             <button
               type="submit"
-              className="bg-[var(--brand)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--brand-deep)]"
+              className="bg-[var(--primary-celeste)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--primary-hover)]"
             >
               Buscar
             </button>
@@ -85,7 +85,7 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
           )}
           <NavLink
             to="/publicar"
-            className="rounded-xl bg-[var(--coral)] px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-[var(--coral-deep)] hover:scale-[1.02] active:scale-[0.98]"
+            className="rounded-xl bg-[var(--cta-orange)] px-3.5 py-2 text-sm font-semibold text-white transition hover:brightness-95 hover:scale-[1.02] active:scale-[0.98]"
           >
             Publicar
           </NavLink>
@@ -132,7 +132,7 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
             )}
             <NavLink
               to="/publicar"
-              className="rounded-xl bg-[var(--coral)] px-3.5 py-2.5 text-center text-sm font-semibold text-white"
+              className="rounded-xl bg-[var(--cta-orange)] px-3.5 py-2.5 text-center text-sm font-semibold text-white"
               onClick={() => setMenuOpen(false)}
             >
               Publicar

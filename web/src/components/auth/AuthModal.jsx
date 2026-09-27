@@ -146,7 +146,7 @@ export default function AuthModal() {
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-xl bg-[var(--brand)] py-3 text-sm font-semibold text-white hover:bg-[var(--brand-deep)] disabled:opacity-60"
+            className="w-full rounded-xl bg-[var(--primary-celeste)] py-3 text-sm font-semibold text-white hover:bg-[var(--primary-hover)] disabled:opacity-60"
           >
             {busy ? 'Espera…' : mode === 'login' ? 'Entrar' : 'Crear cuenta'}
           </button>

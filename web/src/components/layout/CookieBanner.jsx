@@ -19,7 +19,7 @@ export default function CookieBanner() {
         </p>
         <button
           type="button"
-          className="shrink-0 rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--brand-deep)]"
+          className="shrink-0 rounded-xl bg-[var(--primary-celeste)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--primary-hover)]"
           onClick={() => {
             writeJSON('cookies-ok', true);
             setVisible(false);

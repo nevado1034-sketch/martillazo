@@ -375,7 +375,7 @@ export default function PublishPage() {
             <button
               type="submit"
               disabled={!canSubmit || busy}
-              className="w-full rounded-xl bg-[var(--coral)] py-3.5 text-sm font-semibold text-white transition hover:bg-[var(--coral-deep)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-xl bg-[var(--cta-orange)] py-3.5 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy ? 'Publicando…' : 'Publicar anuncio'}
             </button>
