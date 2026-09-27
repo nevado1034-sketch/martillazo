@@ -1,6 +1,7 @@
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../../store/AuthContext.jsx';
+import AccountMenu, { AccountMenuMobile } from './AccountMenu.jsx';
 
 export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
   const navigate = useNavigate();
@@ -62,18 +63,8 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
           <NavLink to="/buscar?tipo=servicio" className={linkClass}>
             Servicios
           </NavLink>
-          <NavLink to="/mis-ofertas" className={linkClass}>
-            Mis ofertas
-          </NavLink>
           {user ? (
-            <button
-              type="button"
-              onClick={logout}
-              className="text-sm font-medium text-[var(--ink-muted)] hover:text-[var(--ink)]"
-              title={user.email}
-            >
-              Salir
-            </button>
+            <AccountMenu user={user} onLogout={logout} />
           ) : (
             <button
               type="button"
@@ -118,15 +109,21 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
             <NavLink to="/buscar?tipo=servicio" className={linkClass} onClick={() => setMenuOpen(false)}>
               Servicios
             </NavLink>
-            <NavLink to="/mis-ofertas" className={linkClass} onClick={() => setMenuOpen(false)}>
-              Mis ofertas
-            </NavLink>
             {user ? (
-              <button type="button" className="text-left text-sm font-medium text-[var(--ink-muted)]" onClick={() => { logout(); setMenuOpen(false); }}>
-                Salir ({user.fullName?.split(' ')[0]})
-              </button>
+              <AccountMenuMobile
+                user={user}
+                onLogout={logout}
+                onNavigate={() => setMenuOpen(false)}
+              />
             ) : (
-              <button type="button" className="text-left text-sm font-medium text-[var(--brand)]" onClick={() => { setAuthOpen(true); setMenuOpen(false); }}>
+              <button
+                type="button"
+                className="text-left text-sm font-medium text-[var(--primary-celeste)]"
+                onClick={() => {
+                  setAuthOpen(true);
+                  setMenuOpen(false);
+                }}
+              >
                 Entrar / Crear cuenta
               </button>
             )}
