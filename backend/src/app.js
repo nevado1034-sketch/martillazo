@@ -40,6 +40,9 @@ export function createApp({
 }) {
   const app = express();
 
+  // Detrás de Vite proxy / Cloudflare tunnel
+  app.set('trust proxy', 1);
+
   // En desarrollo se acepta cualquier origen (incluye el celular en la LAN).
   app.use(
     cors({

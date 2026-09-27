@@ -17,9 +17,11 @@ export default function AccountMenu({ user, onLogout }) {
       if (e.key === 'Escape') setOpen(false);
     };
     document.addEventListener('mousedown', onDoc);
+    document.addEventListener('touchstart', onDoc, { passive: true });
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('touchstart', onDoc);
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
@@ -56,7 +58,7 @@ export default function AccountMenu({ user, onLogout }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-[60] mt-2 w-52 overflow-hidden rounded-xl border border-[var(--line)] bg-white py-1 shadow-lg animate-fade-in"
+          className="absolute right-0 z-[60] mt-2 w-[min(16rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-[var(--line)] bg-white py-1 shadow-lg animate-fade-in"
         >
           <p className="truncate border-b border-[var(--line)] px-3 py-2 text-xs text-[var(--ink-faint)]">
             {user.email}

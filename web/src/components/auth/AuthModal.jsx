@@ -63,7 +63,7 @@ export default function AuthModal() {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative w-full max-w-md rounded-t-2xl border border-[var(--line)] bg-white p-5 shadow-2xl animate-modal-up sm:rounded-2xl"
+        className="relative max-h-[92svh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-[var(--line)] bg-white p-5 shadow-2xl animate-modal-up sm:rounded-2xl"
       >
         <h2 id={titleId} className="font-display text-xl font-bold text-[var(--ink)]">
           {intentLabel}

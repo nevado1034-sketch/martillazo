@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import SiteHeader from '../components/layout/SiteHeader.jsx';
 import SiteFooter from '../components/layout/SiteFooter.jsx';
+import PhotoPicker from '../components/publish/PhotoPicker.jsx';
 import { useMarketplace } from '../store/MarketplaceContext.jsx';
 import { useAuth } from '../store/AuthContext.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
@@ -36,6 +37,7 @@ export default function PublishPage() {
   const [category, setCategory] = useState('');
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
+  const [photoError, setPhotoError] = useState('');
   const [condition, setCondition] = useState('Buen estado');
   const [negotiable, setNegotiable] = useState(true);
   const [shipping, setShipping] = useState('persona');
@@ -62,11 +64,23 @@ export default function PublishPage() {
     setStep('datos');
   };
 
-  const onPickPhoto = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const clearPhoto = () => {
+    if (photoPreview?.startsWith('blob:')) URL.revokeObjectURL(photoPreview);
+    setPhotoFile(null);
+    setPhotoPreview('');
+    setPhotoError('');
+  };
+
+  const onPickPhoto = (file, errMsg) => {
+    if (errMsg) {
+      clearPhoto();
+      setPhotoError(errMsg);
+      return;
+    }
+    if (photoPreview?.startsWith('blob:')) URL.revokeObjectURL(photoPreview);
+    setPhotoError('');
     setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
+    setPhotoPreview(file ? URL.createObjectURL(file) : '');
   };
 
   const submit = async (e) => {
@@ -79,11 +93,19 @@ export default function PublishPage() {
     }
 
     setBusy(true);
+    setPhotoError('');
     try {
       let images = [];
       if (photoFile) {
-        const uploaded = await uploadPhoto(token, photoFile);
-        if (uploaded?.url) images = [uploaded.url];
+        try {
+          const uploaded = await uploadPhoto(token, photoFile);
+          if (uploaded?.url) images = [uploaded.url];
+        } catch (upErr) {
+          setPhotoError(upErr.message || 'No se pudo subir la foto. Revisa la conexión e inténtalo de nuevo.');
+          push(upErr.message || 'Error al subir la foto');
+          setBusy(false);
+          return;
+        }
       }
 
       const base = {
@@ -126,7 +148,7 @@ export default function PublishPage() {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
 
-      <main className="mx-auto w-full max-w-xl flex-1 px-4 py-8 sm:py-12">
+      <main className="mx-auto w-full max-w-xl flex-1 px-3 py-6 sm:px-4 sm:py-12">
         <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ink-faint)]">
           Publicar · paso {Math.min(stepIndex + 1, 2)} de 2
         </p>
@@ -202,23 +224,16 @@ export default function PublishPage() {
               ← Cambiar a {tipo === 'servicio' ? 'producto' : 'servicio'}
             </button>
 
-            <Field label="Foto" htmlFor="pub-photo">
-              <input
-                id="pub-photo"
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={onPickPhoto}
-                className="block w-full text-sm text-[var(--ink-muted)] file:mr-3 file:rounded-lg file:border-0 file:bg-[var(--mint-soft)] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-[var(--brand-deep)]"
+            <div>
+              <p className="mb-2 text-sm font-medium text-[var(--ink)]">Foto</p>
+              <PhotoPicker
+                file={photoFile}
+                previewUrl={photoPreview}
+                error={photoError}
+                onPick={onPickPhoto}
+                onClear={clearPhoto}
               />
-              {photoPreview && (
-                <img
-                  src={photoPreview}
-                  alt=""
-                  className="mt-3 h-40 w-full rounded-xl object-cover border border-[var(--line)]"
-                />
-              )}
-            </Field>
+            </div>
 
             <Field label="Título" htmlFor="pub-title">
               <input
