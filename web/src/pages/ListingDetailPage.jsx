@@ -18,6 +18,9 @@ import {
 } from '../utils/whatsapp.js';
 import { buyNow } from '../api/escrow.js';
 import ListingGallery from '../components/listings/ListingGallery.jsx';
+import RelatedCarousel from '../components/listings/RelatedCarousel.jsx';
+import { fetchRelatedForListing } from '../api/listings.js';
+import { mediaUrl } from '../api/config.js';
 
 export default function ListingDetailPage() {
   const { id } = useParams();
@@ -33,6 +36,8 @@ export default function ListingDetailPage() {
   const [offers, setOffers] = useState([]);
   const [isSeller, setIsSeller] = useState(false);
   const [lastOffer, setLastOffer] = useState(null);
+  const [related, setRelated] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +69,30 @@ export default function ListingDetailPage() {
       })
       .catch(() => setOffers([]));
   }, [token, id, loadOffers, lastOffer]);
+
+  useEffect(() => {
+    if (!id) return undefined;
+    let cancelled = false;
+    setRelatedLoading(true);
+    fetchRelatedForListing(id, { limit: 12 })
+      .then((data) => {
+        if (cancelled) return;
+        const list = (data || []).map((l) => ({
+          ...l,
+          images: (l.images || []).map((u) => mediaUrl(u)),
+        }));
+        setRelated(list);
+      })
+      .catch(() => {
+        if (!cancelled) setRelated([]);
+      })
+      .finally(() => {
+        if (!cancelled) setRelatedLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   if (loading) {
     return (
@@ -333,6 +362,12 @@ export default function ListingDetailPage() {
             )}
           </div>
         </div>
+
+        <RelatedCarousel
+          title="Productos relacionados"
+          listings={related}
+          loading={relatedLoading}
+        />
       </main>
 
       <SiteFooter />

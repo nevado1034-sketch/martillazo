@@ -1,4 +1,5 @@
 import { AppError } from '../../utils/errors.js';
+import { rankRelated, tokenize } from './related.js';
 
 function mapSeller(row, { revealPhone = true } = {}) {
   return {
@@ -297,6 +298,111 @@ export class ListingsService {
       }
       throw err;
     }
+  }
+
+  /**
+   * Relacionados a un anuncio: categoría, tokens de título, ubicación, precio ±30%.
+   */
+  async relatedForListing(id, { limit = 12 } = {}) {
+    const seed = await this.getById(id);
+    const exclude = new Set([id]);
+    const { rows } = await this.pool.query(
+      `${LISTING_SELECT}
+       WHERE l.status = 'active' AND l.id <> $1
+       ORDER BY l.created_at DESC
+       LIMIT 80`,
+      [id],
+    );
+    const candidates = rows
+      .map((row) =>
+        this.#mapListingWithPhone(row, { viewerId: null, hasOffer: false }),
+      )
+      .filter((c) => !exclude.has(c.id));
+
+    const ctx = {
+      type: seed.type,
+      category: seed.category,
+      location: seed.location,
+      price: seed.price,
+      tokens: tokenize(`${seed.title} ${seed.description || ''}`),
+    };
+    return rankRelated(candidates, ctx, {
+      limit: Math.min(Number(limit) || 12, 16),
+    });
+  }
+
+  /**
+   * Relacionados a una búsqueda (q / cat / tipo), excluyendo IDs ya mostrados.
+   */
+  async relatedForQuery({
+    q,
+    tipo,
+    cat,
+    exclude = [],
+    priceHint,
+    limit = 12,
+  } = {}) {
+    const excludeSet = new Set(
+      (Array.isArray(exclude) ? exclude : String(exclude || '').split(','))
+        .map((x) => String(x).trim())
+        .filter(Boolean),
+    );
+
+    const clauses = [`l.status = 'active'`];
+    const params = [];
+    let i = 1;
+    if (tipo === 'producto' || tipo === 'servicio') {
+      clauses.push(`l.type = $${i++}`);
+      params.push(tipo);
+    }
+    // Ampliar pool: mismos tipo/cat si hay, sin filtrar por q (el score usa tokens)
+    if (cat) {
+      // prefer same cat but also fetch without — pull wider set
+    }
+
+    params.push(100);
+    const { rows } = await this.pool.query(
+      `${LISTING_SELECT}
+       WHERE ${clauses.join(' AND ')}
+       ORDER BY l.created_at DESC
+       LIMIT $${i}`,
+      params,
+    );
+
+    const candidates = rows
+      .map((row) =>
+        this.#mapListingWithPhone(row, { viewerId: null, hasOffer: false }),
+      )
+      .filter((c) => !excludeSet.has(c.id));
+
+    const tokens = tokenize(q || '');
+    let price = Number(priceHint);
+    if (!Number.isFinite(price) && candidates.length) {
+      const prices = candidates.map((c) => c.price).filter((n) => n > 0).sort((a, b) => a - b);
+      price = prices[Math.floor(prices.length / 2)] || null;
+    }
+
+    const ctx = {
+      type: tipo === 'producto' || tipo === 'servicio' ? tipo : null,
+      category: cat || null,
+      location: tokens.length ? null : null,
+      price,
+      tokens: tokens.length ? tokens : tokenize(cat || ''),
+    };
+
+    // If query empty, soft-related by category/type/recency among non-excluded
+    let ranked = rankRelated(candidates, ctx, {
+      limit: Math.min(Number(limit) || 12, 16),
+    });
+    if (!ranked.length) {
+      ranked = candidates
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+        )
+        .slice(0, Math.min(Number(limit) || 12, 16));
+    }
+    return ranked;
   }
 
   async myOffers({ buyerId }) {

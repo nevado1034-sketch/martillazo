@@ -20,3 +20,25 @@ export async function createListing(token, input) {
 export async function fetchMyListings(token) {
   return apiFetch('/api/me/listings', { token });
 }
+
+export async function fetchRelatedForListing(id, { limit } = {}) {
+  const qs = limit ? `?limit=${limit}` : '';
+  return apiFetch(`/api/listings/${id}/related${qs}`);
+}
+
+export async function fetchRelatedListings({
+  q,
+  tipo,
+  cat,
+  exclude,
+  limit,
+} = {}) {
+  const qs = new URLSearchParams();
+  if (q) qs.set('q', q);
+  if (tipo && tipo !== 'todos') qs.set('tipo', tipo);
+  if (cat) qs.set('cat', cat);
+  if (exclude?.length) qs.set('exclude', exclude.join(','));
+  if (limit) qs.set('limit', String(limit));
+  const qstr = qs.toString();
+  return apiFetch(`/api/listings/related${qstr ? `?${qstr}` : ''}`);
+}

@@ -4,7 +4,10 @@ import SiteHeader from '../components/layout/SiteHeader.jsx';
 import SiteFooter from '../components/layout/SiteFooter.jsx';
 import ListingCard from '../components/listings/ListingCard.jsx';
 import TypeToggle from '../components/listings/TypeToggle.jsx';
+import RelatedCarousel from '../components/listings/RelatedCarousel.jsx';
 import { useMarketplace } from '../store/MarketplaceContext.jsx';
+import { fetchRelatedListings } from '../api/listings.js';
+import { mediaUrl } from '../api/config.js';
 import {
   PRODUCT_CATEGORIES,
   SERVICE_CATEGORIES,
@@ -15,6 +18,8 @@ export default function BrowsePage() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const [fetching, setFetching] = useState(false);
+  const [related, setRelated] = useState([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
 
   const q = params.get('q') || '';
   const tipo = params.get('tipo') || 'todos';
@@ -28,6 +33,37 @@ export default function BrowsePage() {
       cat: cat || undefined,
     }).finally(() => setFetching(false));
   }, [q, tipo, cat, refreshListings]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setRelatedLoading(true);
+    const exclude = listings.map((l) => l.id);
+    fetchRelatedListings({
+      q: q || undefined,
+      tipo: tipo === 'todos' ? undefined : tipo,
+      cat: cat || undefined,
+      exclude,
+      limit: 12,
+    })
+      .then((data) => {
+        if (cancelled) return;
+        setRelated(
+          (data || []).map((l) => ({
+            ...l,
+            images: (l.images || []).map((u) => mediaUrl(u)),
+          })),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setRelated([]);
+      })
+      .finally(() => {
+        if (!cancelled) setRelatedLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [q, tipo, cat, listings]);
 
   const categories =
     tipo === 'servicio' ? SERVICE_CATEGORIES : PRODUCT_CATEGORIES;
@@ -113,6 +149,12 @@ export default function BrowsePage() {
             ))}
           </div>
         )}
+
+        <RelatedCarousel
+          title="También te puede interesar"
+          listings={related}
+          loading={relatedLoading}
+        />
       </main>
 
       <SiteFooter />

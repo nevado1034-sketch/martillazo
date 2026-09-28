@@ -28,6 +28,36 @@ export class ListingsController {
     }
   };
 
+  relatedQuery = async (req, res, next) => {
+    try {
+      const exclude = req.query.exclude
+        ? String(req.query.exclude).split(',')
+        : [];
+      const data = await this.service.relatedForQuery({
+        q: req.query.q,
+        tipo: req.query.tipo,
+        cat: req.query.cat,
+        exclude,
+        priceHint: req.query.price,
+        limit: req.query.limit,
+      });
+      return res.json({ data });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  relatedForListing = async (req, res, next) => {
+    try {
+      const data = await this.service.relatedForListing(req.params.id, {
+        limit: req.query.limit,
+      });
+      return res.json({ data });
+    } catch (err) {
+      next(err);
+    }
+  };
+
   create = async (req, res, next) => {
     try {
       const data = await this.service.create({

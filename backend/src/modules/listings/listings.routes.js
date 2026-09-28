@@ -5,6 +5,9 @@ export function createListingsRouter(controller) {
   const router = Router();
 
   router.get('/', controller.list);
+  // Antes de /:id para no capturar "related" como UUID
+  router.get('/related', controller.relatedQuery);
+  router.get('/:id/related', controller.relatedForListing);
   router.get('/:id', optionalAuth, controller.get);
   router.post('/', authenticate, controller.create);
   router.get('/:id/offers', authenticate, controller.listOffers);
