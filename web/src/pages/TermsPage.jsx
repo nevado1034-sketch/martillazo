@@ -173,8 +173,15 @@ export default function TermsPage() {
       <H>11. Contacto</H>
       <P>
         Consultas sobre estos términos:{' '}
+        <a
+          href="mailto:soporte@pulgasya.com"
+          className="text-[var(--primary-celeste)] hover:underline"
+        >
+          soporte@pulgasya.com
+        </a>
+        {' · '}
         <Link to="/ayuda" className="text-[var(--primary-celeste)] hover:underline">
-          Ayuda / soporte
+          Ayuda
         </Link>
         . También puedes revisar nuestra{' '}
         <Link to="/privacidad" className="text-[var(--primary-celeste)] hover:underline">
