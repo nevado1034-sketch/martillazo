@@ -269,9 +269,17 @@ export class EscrowService {
 
   /**
    * Pago sandbox: simula captura y deja fondos en custodia de la plataforma.
-   * No acepta ni guarda PAN/CVV.
+   * No acepta ni guarda PAN/CVV. Bloqueado en producción (env.sandboxPayEnabled).
    */
   async paySandbox({ orderId, buyerId, idempotencyKey }) {
+    if (!env.sandboxPayEnabled) {
+      throw new AppError({
+        code: 'SANDBOX_PAY_DISABLED',
+        message:
+          'El pago sandbox no está disponible en este entorno. Contacta soporte o espera la pasarela.',
+        status: 403,
+      });
+    }
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -795,6 +803,7 @@ export class EscrowService {
       holdHoursAfterDelivery: HOLD_HOURS,
       provider: this.provider.name,
       readyToChargeReal: false,
+      sandboxPayEnabled: env.sandboxPayEnabled,
     };
   }
 }

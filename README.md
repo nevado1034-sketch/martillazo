@@ -31,7 +31,8 @@ npm run dev
 - Web: http://localhost:5173  
 - API: http://localhost:4000  
 
-Cuenta demo: `demo@pulgasya.com` / `pulgasya123`
+Demo (solo local): aplica `database/seed_pulgasya_demo.sql` con `SEED_DEMO=true`.
+No uses seed demo en producción (`SEED_DEMO=false`; migración `009` desactiva la cuenta).
 
 ## Estructura web
 

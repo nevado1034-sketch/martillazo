@@ -139,7 +139,9 @@ export default function OrderDetailPage() {
       </div>
 
       <div className="mt-6 flex flex-col gap-2">
-        {isBuyer && order.status === 'pending_payment' && (
+        {isBuyer &&
+          order.status === 'pending_payment' &&
+          import.meta.env.VITE_ENABLE_SANDBOX_PAY === 'true' && (
           <button
             type="button"
             disabled={busy}
@@ -156,6 +158,14 @@ export default function OrderDetailPage() {
           >
             Pagar en custodia PulgasYa (sandbox)
           </button>
+        )}
+        {isBuyer &&
+          order.status === 'pending_payment' &&
+          import.meta.env.VITE_ENABLE_SANDBOX_PAY !== 'true' && (
+          <p className="rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 py-3 text-sm text-[var(--ink-muted)]">
+            El pago en línea aún no está habilitado. Coordina con el vendedor por
+            WhatsApp o espera la pasarela de cobro.
+          </p>
         )}
 
         {isSeller && order.status === 'held' && (

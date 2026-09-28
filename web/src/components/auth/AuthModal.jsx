@@ -70,7 +70,7 @@ export default function AuthModal() {
         </h2>
         <p className="mt-1 text-sm text-[var(--ink-muted)]">
           {mode === 'login'
-            ? 'Usa tu correo o la cuenta demo: demo@pulgasya.com / pulgasya123'
+            ? 'Usa el correo con el que te registraste.'
             : 'Necesitas WhatsApp para que compradores y vendedores se contacten.'}
         </p>
 

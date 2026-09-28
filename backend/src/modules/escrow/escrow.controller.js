@@ -1,3 +1,5 @@
+import { env } from '../../config/env.js';
+
 export class EscrowController {
   constructor(service) {
     this.service = service;
@@ -58,6 +60,15 @@ export class EscrowController {
 
   paySandbox = async (req, res, next) => {
     try {
+      if (!env.sandboxPayEnabled) {
+        return res.status(403).json({
+          error: {
+            code: 'SANDBOX_PAY_DISABLED',
+            message:
+              'El pago sandbox no está disponible en este entorno. Contacta soporte o espera la pasarela.',
+          },
+        });
+      }
       // Rechazar cualquier intento de enviar PAN/CVV
       if (req.body?.cvv != null || req.body?.pan != null || req.body?.cardNumber) {
         return res.status(422).json({
