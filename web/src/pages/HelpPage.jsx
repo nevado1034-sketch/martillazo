@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import SiteHeader from '../components/layout/SiteHeader.jsx';
 import SiteFooter from '../components/layout/SiteFooter.jsx';
 
-const SUPPORT = 'soporte@pulgasya.local';
+const SUPPORT = 'soporte@pulgasya.com';
 const WA = '51999900000';
 
 export default function HelpPage() {
@@ -61,7 +61,7 @@ export default function HelpPage() {
               href={`mailto:${SUPPORT}?subject=Ayuda%20PulgasYa`}
               className="rounded-xl bg-[var(--primary-celeste)] px-4 py-3 text-center text-sm font-semibold text-white"
             >
-              Correo: {SUPPORT}
+              Escribir a {SUPPORT}
             </a>
             <a
               href={`https://wa.me/${WA}?text=${encodeURIComponent('Hola PulgasYa, necesito ayuda con mi cuenta.')}`}
@@ -69,12 +69,17 @@ export default function HelpPage() {
               rel="noreferrer"
               className="rounded-xl bg-[var(--cta-orange)] px-4 py-3 text-center text-sm font-semibold text-white"
             >
-              WhatsApp soporte
+              WhatsApp de soporte
             </a>
           </div>
-          <p className="mt-3 text-xs text-[var(--ink-faint)]">
-            Sustituye el número/correo de soporte en variables de entorno al
-            desplegar en producción.
+          <p className="mt-3 text-xs text-[var(--ink-muted)]">
+            Correo oficial:{' '}
+            <a
+              href={`mailto:${SUPPORT}`}
+              className="font-medium text-[var(--primary-celeste)] hover:underline"
+            >
+              {SUPPORT}
+            </a>
           </p>
         </section>
 

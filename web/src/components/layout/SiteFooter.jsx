@@ -23,6 +23,12 @@ export default function SiteFooter() {
           <Link to="/ayuda" className="hover:text-[var(--ink)]">
             Ayuda
           </Link>
+          <a
+            href="mailto:soporte@pulgasya.com"
+            className="hover:text-[var(--ink)]"
+          >
+            Soporte
+          </a>
           <Link to="/terminos" className="hover:text-[var(--ink)]">
             Términos
           </Link>

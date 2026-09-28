@@ -21,9 +21,16 @@ export default function PrivacyPage() {
           <P>
             El tratamiento de datos personales en PulgasYa se realiza para
             operar el marketplace (cuenta, anuncios, ofertas y contacto entre
-            usuarios). Contacto:{' '}
+            usuarios). Contacto de soporte:{' '}
+            <a
+              href="mailto:soporte@pulgasya.com"
+              className="text-[var(--primary-celeste)] hover:underline"
+            >
+              soporte@pulgasya.com
+            </a>
+            {' · '}
             <Link to="/ayuda" className="text-[var(--primary-celeste)] hover:underline">
-              soporte
+              Ayuda
             </Link>
             .
           </P>
@@ -68,8 +75,14 @@ export default function PrivacyPage() {
           <H>6. Derechos ARCO</H>
           <P>
             Puedes solicitar acceso, rectificación, cancelación u oposición
-            respecto de tus datos personales contactando a soporte, sujeto a
-            verificación de identidad.
+            respecto de tus datos personales escribiendo a{' '}
+            <a
+              href="mailto:soporte@pulgasya.com"
+              className="text-[var(--primary-celeste)] hover:underline"
+            >
+              soporte@pulgasya.com
+            </a>
+            , sujeto a verificación de identidad.
           </P>
 
           <H>7. Cookies</H>
