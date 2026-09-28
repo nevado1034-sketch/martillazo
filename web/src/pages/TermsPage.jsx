@@ -104,10 +104,17 @@ export default function TermsPage() {
         Alineado con la custodia PulgasYa: el comprador dispone de{' '}
         <strong>24 horas</strong> desde la recepción / estado «entregado» para
         reportar anomalías sustanciales por los canales oficiales de la
-        plataforma (p. ej. reclamo en el pedido o{' '}
+        plataforma (reclamo en el pedido,{' '}
         <Link to="/ayuda" className="text-[var(--primary-celeste)] hover:underline">
           Ayuda
         </Link>
+        {' '}o correo a{' '}
+        <a
+          href="mailto:soporte@pulgasya.com?subject=Reclamo%20PulgasYa"
+          className="text-[var(--primary-celeste)] hover:underline"
+        >
+          soporte@pulgasya.com
+        </a>
         ). Transcurrido ese plazo sin reclamo, la transacción se considera
         completada a efectos de liberación del pago al vendedor (sin perjuicio de
         derechos irrenunciables que otorgue la ley).
@@ -115,10 +122,34 @@ export default function TermsPage() {
       <P>
         Daños de transporte: deben reportarse dentro de las mismas{' '}
         <strong>24 horas</strong>, idealmente con evidencia fotográfica o de
-        video del desembalaje.
+        video del desembalaje, a{' '}
+        <a
+          href="mailto:soporte@pulgasya.com?subject=Reclamo%20transporte%20PulgasYa"
+          className="text-[var(--primary-celeste)] hover:underline"
+        >
+          soporte@pulgasya.com
+        </a>
+        .
       </P>
 
       <H>7. Cambios, devoluciones y reclamos</H>
+      <P>
+        <strong>Canal oficial de reclamos.</strong> Cualquier reclamo,
+        disputa o queja de <strong>comprador o vendedor</strong> (producto no
+        recibido, condición distinta a la anunciada, problemas de pago en
+        custodia, mediación, etc.) debe dirigirse a{' '}
+        <a
+          href="mailto:soporte@pulgasya.com?subject=Reclamo%20PulgasYa"
+          className="text-[var(--primary-celeste)] hover:underline"
+        >
+          soporte@pulgasya.com
+        </a>
+        . También puedes abrir un reclamo desde el pedido en la app o desde{' '}
+        <Link to="/ayuda" className="text-[var(--primary-celeste)] hover:underline">
+          Ayuda
+        </Link>
+        .
+      </P>
       <P>
         <strong>Procederán</strong>, en línea con la custodia y la mediación de
         la plataforma, cuando: el pedido no se recibe; el producto es
@@ -172,7 +203,8 @@ export default function TermsPage() {
 
       <H>11. Contacto</H>
       <P>
-        Consultas sobre estos términos:{' '}
+        Consultas sobre estos términos, reclamos de compradores o vendedores y
+        atención general:{' '}
         <a
           href="mailto:soporte@pulgasya.com"
           className="text-[var(--primary-celeste)] hover:underline"
