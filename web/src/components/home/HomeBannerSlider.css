@@ -31,6 +31,11 @@
   touch-action: pan-y;
 }
 
+/* Salto silencioso al clone → índice real (sin animar el rewind) */
+.home-banner__track--instant {
+  transition: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-banner__track {
     transition: none;
