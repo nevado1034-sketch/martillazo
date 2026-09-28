@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import SiteHeader from '../components/layout/SiteHeader.jsx';
 import SiteFooter from '../components/layout/SiteFooter.jsx';
+import HomeBannerSlider from '../components/home/HomeBannerSlider.jsx';
 import ListingCard from '../components/listings/ListingCard.jsx';
 import TypeToggle from '../components/listings/TypeToggle.jsx';
 import { useMarketplace } from '../store/MarketplaceContext.jsx';
@@ -37,50 +38,7 @@ export default function HomePage() {
       <SiteHeader />
 
       <main className="flex-1">
-        <section className="relative isolate min-h-[min(92svh,720px)] overflow-hidden">
-          <div className="absolute inset-0 bg-hero-atmosphere" aria-hidden="true" />
-          <div
-            className="absolute inset-0 opacity-[0.4]"
-            style={{
-              backgroundImage:
-                'radial-gradient(circle at 18% 22%, rgba(255,255,255,0.55) 0, transparent 42%), radial-gradient(circle at 88% 8%, rgba(58,124,165,0.22) 0, transparent 36%)',
-            }}
-            aria-hidden="true"
-          />
-          <img
-            src="https://images.unsplash.com/photo-1556912173-3bb406ef7e77?w=1600&q=80"
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover object-[center_40%] opacity-[0.42] mix-blend-multiply"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[var(--surface)] via-[color-mix(in_srgb,var(--surface)_80%,transparent)] to-transparent" />
-
-          <div className="relative mx-auto flex min-h-[min(92svh,720px)] max-w-6xl flex-col justify-center px-4 py-14 sm:py-20">
-            <p className="font-display animate-hero-in text-5xl font-bold tracking-tight text-[var(--primary-celeste)] sm:text-6xl md:text-7xl">
-              PulgasYa
-            </p>
-            <h1 className="mt-4 max-w-xl animate-hero-in font-display text-3xl font-semibold leading-[1.15] text-[var(--ink)] delay-100 sm:text-4xl md:text-[2.75rem]">
-              Segunda mano y servicios cerca de ti
-            </h1>
-            <p className="mt-4 max-w-md animate-hero-in text-base leading-relaxed text-[var(--ink-muted)] delay-200 sm:text-lg">
-              Compra, vende y contrata en soles — con ofertas claras y tarifas de servicio de verdad.
-            </p>
-
-            <div className="mt-8 flex animate-hero-in flex-wrap gap-3 delay-300">
-              <a
-                href="#cerca"
-                className="rounded-xl bg-[var(--primary-celeste)] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-hover)] hover:scale-[1.02] active:scale-[0.98]"
-              >
-                Buscar
-              </a>
-              <Link
-                to="/publicar"
-                className="rounded-xl bg-[var(--cta-orange)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-95 hover:scale-[1.02] active:scale-[0.98]"
-              >
-                Publicar
-              </Link>
-            </div>
-          </div>
-        </section>
+        <HomeBannerSlider />
 
         <section id="cerca" className="scroll-mt-20 border-b border-[var(--line)] bg-white/65 py-12 sm:py-14">
           <div className="mx-auto max-w-6xl px-4">
