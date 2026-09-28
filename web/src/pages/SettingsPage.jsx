@@ -307,9 +307,6 @@ export default function SettingsPage() {
       <h1 className="mt-3 font-display text-3xl font-bold text-[var(--text-dark)]">
         Configuración
       </h1>
-      <p className="mt-2 text-sm text-[var(--ink-muted)]">
-        Perfil, seguridad, pagos (metadatos) e identidad. Celeste y naranja PulgasYa.
-      </p>
 
       {(error || savedMsg) && (
         <div className="mt-4 space-y-2">
