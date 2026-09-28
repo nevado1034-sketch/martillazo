@@ -35,9 +35,11 @@ export default function PublishPage() {
   const [price, setPrice] = useState('');
   const [location, setLocation] = useState('');
   const [category, setCategory] = useState('');
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState('');
+  /** Hasta 8 fotos para la galería ML-style en la ficha */
+  const [photoItems, setPhotoItems] = useState([]); // { file, preview }
   const [photoError, setPhotoError] = useState('');
+  const photoFile = photoItems[photoItems.length - 1]?.file ?? null;
+  const photoPreview = photoItems[photoItems.length - 1]?.preview ?? '';
   const [condition, setCondition] = useState('Buen estado');
   const [negotiable, setNegotiable] = useState(true);
   const [shipping, setShipping] = useState('persona');
@@ -65,22 +67,38 @@ export default function PublishPage() {
   };
 
   const clearPhoto = () => {
-    if (photoPreview?.startsWith('blob:')) URL.revokeObjectURL(photoPreview);
-    setPhotoFile(null);
-    setPhotoPreview('');
+    photoItems.forEach((item) => {
+      if (item.preview?.startsWith('blob:')) URL.revokeObjectURL(item.preview);
+    });
+    setPhotoItems([]);
     setPhotoError('');
+  };
+
+  const removePhotoAt = (idx) => {
+    setPhotoItems((prev) => {
+      const next = [...prev];
+      const [removed] = next.splice(idx, 1);
+      if (removed?.preview?.startsWith('blob:')) {
+        URL.revokeObjectURL(removed.preview);
+      }
+      return next;
+    });
   };
 
   const onPickPhoto = (file, errMsg) => {
     if (errMsg) {
-      clearPhoto();
       setPhotoError(errMsg);
       return;
     }
-    if (photoPreview?.startsWith('blob:')) URL.revokeObjectURL(photoPreview);
+    if (!file) return;
     setPhotoError('');
-    setPhotoFile(file);
-    setPhotoPreview(file ? URL.createObjectURL(file) : '');
+    setPhotoItems((prev) => {
+      if (prev.length >= 8) {
+        setPhotoError('Máximo 8 fotos por anuncio.');
+        return prev;
+      }
+      return [...prev, { file, preview: URL.createObjectURL(file) }];
+    });
   };
 
   const submit = async (e) => {
@@ -96,10 +114,12 @@ export default function PublishPage() {
     setPhotoError('');
     try {
       let images = [];
-      if (photoFile) {
+      if (photoItems.length) {
         try {
-          const uploaded = await uploadPhoto(token, photoFile);
-          if (uploaded?.url) images = [uploaded.url];
+          for (const item of photoItems) {
+            const uploaded = await uploadPhoto(token, item.file);
+            if (uploaded?.url) images.push(uploaded.url);
+          }
         } catch (upErr) {
           setPhotoError(upErr.message || 'No se pudo subir la foto. Revisa la conexión e inténtalo de nuevo.');
           push(upErr.message || 'Error al subir la foto');
@@ -225,7 +245,30 @@ export default function PublishPage() {
             </button>
 
             <div>
-              <p className="mb-2 text-sm font-medium text-[var(--ink)]">Foto</p>
+              <p className="mb-2 text-sm font-medium text-[var(--ink)]">
+                Fotos (hasta 8 — galería en la ficha)
+              </p>
+              {photoItems.length > 0 && (
+                <ul className="mb-3 flex flex-wrap gap-2">
+                  {photoItems.map((item, i) => (
+                    <li key={item.preview} className="relative">
+                      <img
+                        src={item.preview}
+                        alt=""
+                        className="h-16 w-16 rounded-lg object-cover ring-1 ring-[var(--line)]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePhotoAt(i)}
+                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--cta-orange)] text-xs font-bold text-white"
+                        aria-label="Quitar foto"
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
               <PhotoPicker
                 file={photoFile}
                 previewUrl={photoPreview}

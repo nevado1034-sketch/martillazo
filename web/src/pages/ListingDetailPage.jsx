@@ -17,6 +17,7 @@ import {
   offerWhatsAppText,
 } from '../utils/whatsapp.js';
 import { buyNow } from '../api/escrow.js';
+import ListingGallery from '../components/listings/ListingGallery.jsx';
 
 export default function ListingDetailPage() {
   const { id } = useParams();
@@ -29,7 +30,6 @@ export default function ListingDetailPage() {
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [offerOpen, setOfferOpen] = useState(false);
-  const [imgIdx, setImgIdx] = useState(0);
   const [offers, setOffers] = useState([]);
   const [isSeller, setIsSeller] = useState(false);
   const [lastOffer, setLastOffer] = useState(null);
@@ -129,37 +129,7 @@ export default function ListingDetailPage() {
 
         <div className="mt-4 grid gap-8 lg:grid-cols-2">
           <div>
-            <div className="aspect-[4/3] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--mint-wash)]">
-              {images[imgIdx] ? (
-                <img
-                  src={images[imgIdx]}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-[var(--ink-faint)]">
-                  Sin imagen
-                </div>
-              )}
-            </div>
-            {images.length > 1 && (
-              <div className="mt-3 flex gap-2 overflow-x-auto">
-                {images.map((src, i) => (
-                  <button
-                    key={src + i}
-                    type="button"
-                    onClick={() => setImgIdx(i)}
-                    className={`h-16 w-20 shrink-0 overflow-hidden rounded-lg border ${
-                      i === imgIdx
-                        ? 'border-[var(--brand)]'
-                        : 'border-[var(--line)] opacity-80 hover:opacity-100'
-                    }`}
-                  >
-                    <img src={src} alt="" className="h-full w-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
+            <ListingGallery images={images} alt={listing.title} />
           </div>
 
           <div className="animate-hero-in">
