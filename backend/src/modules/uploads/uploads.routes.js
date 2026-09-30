@@ -110,7 +110,8 @@ export function createUploadsRouter() {
           error: { code: 'FILE_REQUIRED', message: 'Adjunta una foto' },
         });
       }
-      const url = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+      // Path relativo: funciona igual en localhost, LAN y túnel (proxy Vite).
+      const url = `/uploads/${req.file.filename}`;
       return res.status(201).json({
         data: { url, kind: 'photo', size: req.file.size },
       });
@@ -130,7 +131,7 @@ export function createUploadsRouter() {
           error: { code: 'FILE_REQUIRED', message: 'Adjunta un video' },
         });
       }
-      const url = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+      const url = `/uploads/${req.file.filename}`;
       return res.status(201).json({
         data: { url, kind: 'video', size: req.file.size },
       });

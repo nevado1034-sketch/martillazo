@@ -1,0 +1,48 @@
+# PulgasYa API — Blueprint de Render
+# Dashboard: New → Blueprint → conectar repo nevado1034-sketch/martillazo
+# Rama recomendada (pre-merge): cursor/pulgasya-mvp-e937
+#
+# Uploads: el API sirve /uploads desde disco local (backend/uploads/media).
+# En el plan free/starter el disco es EFÍMERO: un redeploy borra fotos.
+# Soft launch: aceptable. Producción estable: disco persistente de Render
+# o object storage (S3/R2/GCS).
+
+services:
+  - type: web
+    name: pulgasya-api
+    runtime: node
+    plan: starter
+    region: oregon
+    branch: cursor/pulgasya-mvp-e937
+    # rootDir omitido = raíz del monorepo (NO poner "backend" ni "web")
+    buildCommand: npm install
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20.18.0"
+      - key: NODE_ENV
+        value: production
+      # No fijar PORT: Render inyecta el puerto y el API escucha process.env.PORT
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CLIENT_ORIGIN
+        value: https://pulgasya.com,https://www.pulgasya.com
+      - key: PAYMENT_PROVIDER
+        value: MOCK
+      - key: SEED_DEMO
+        value: "false"
+      - key: PULGASYA_COMMISSION_PERCENT
+        value: "10"
+      - key: JOB_SECRET
+        generateValue: true
+      - key: ESCROW_WEBHOOK_SECRET
+        generateValue: true
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: SUPPORT_EMAIL
+        value: soporte@pulgasya.com

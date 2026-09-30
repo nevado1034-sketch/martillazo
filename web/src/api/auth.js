@@ -1,135 +1,97 @@
-import { API_URL } from './config.js';
+import { apiFetch } from './config.js';
 
-export const DEMO_SESSION_KEY = 'martillazo_session';
+const SESSION_KEY = 'pulgasya:session';
 
-/**
- * Login/registro con proveedor social (Google/Facebook).
- * En desarrollo el backend simula el proveedor; en producción este perfil
- * provendría del callback OAuth. Un correo nuevo crea el cliente en `users`.
- * @param {{ provider: string, email: string, fullName: string, phone?: string, avatarUrl?: string }} params
- */
-export async function socialLogin({ provider, email, fullName, phone, avatarUrl }) {
-  const res = await fetch(`${API_URL}/api/auth/social/${provider}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, fullName, phone, avatarUrl }),
-  });
-  if (!res.ok) {
-    let message = 'No se pudo iniciar sesión';
-    try {
-      const { error } = await res.json();
-      if (error?.message) message = error.message;
-    } catch {
-      // silencioso: mensaje por defecto
-    }
-    throw new Error(message);
-  }
-  const { data } = await res.json();
-  return data; // { token, user }
-}
-
-/** Cuentas demo que simulan el perfil que devolvería cada proveedor. */
-export const SOCIAL_DEMO_ACCOUNTS = {
-  google: {
-    provider: 'google',
-    email: 'comprador@martillazo.pe',
-    fullName: 'Juan Comprador',
-    phone: '+51999990002',
-  },
-  facebook: {
-    provider: 'facebook',
-    email: 'vendedor@martillazo.pe',
-    fullName: 'María Vendedora',
-    phone: '+51999990001',
-  },
-  instagram: {
-    provider: 'instagram',
-    email: 'instagram@martillazo.pe',
-    fullName: 'Camila García',
-    phone: '+51999990004',
-  },
-};
-
-export const PROVIDER_LABELS = {
-  google: 'Google',
-  facebook: 'Facebook',
-  instagram: 'Instagram',
-  register: 'Correo',
-};
-
-export function loadDemoSession() {
+export function loadSession() {
   try {
-    const raw = JSON.parse(localStorage.getItem(DEMO_SESSION_KEY) ?? 'null');
-    if (!raw?.token) return null;
-    const userId = raw.userId ?? raw.user?.id ?? null;
-    return { token: raw.token, userId, user: raw.user ?? null };
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
   } catch {
     return null;
   }
 }
 
-export function saveDemoSession(session) {
-  localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(session));
-}
-
-export function clearDemoSession() {
-  localStorage.removeItem(DEMO_SESSION_KEY);
-}
-
-/** Perfil completo del cliente autenticado. */
-export async function fetchMe(token) {
-  const res = await fetch(`${API_URL}/api/auth/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) throw new Error('No se pudo cargar tu perfil');
-  const { data } = await res.json();
-  return data;
-}
-
-/** Actualiza los datos editables del perfil. */
-export async function updateProfile(token, { fullName, phone, avatarUrl }) {
-  const res = await fetch(`${API_URL}/api/auth/me`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ fullName, phone, avatarUrl }),
-  });
-  if (!res.ok) {
-    let message = 'No se pudo actualizar tu perfil';
-    try {
-      const { error } = await res.json();
-      if (error?.message) message = error.message;
-    } catch {
-      // silencioso
-    }
-    throw new Error(message);
+export function saveSession(session) {
+  if (!session) {
+    localStorage.removeItem(SESSION_KEY);
+    return;
   }
-  const { data } = await res.json();
-  return data;
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }
 
-/** Solicita la verificación de identidad (KYC). */
-export async function requestKyc(token) {
-  const res = await fetch(`${API_URL}/api/auth/kyc`, {
+export function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+}
+
+export async function register({ email, password, fullName, phone }) {
+  return apiFetch('/api/auth/register', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: '{}',
+    body: { email, password, fullName, phone },
   });
-  if (!res.ok) {
-    let message = 'No se pudo solicitar la verificación';
-    try {
-      const { error } = await res.json();
-      if (error?.message) message = error.message;
-    } catch {
-      // silencioso
-    }
-    throw new Error(message);
-  }
-  const { data } = await res.json();
-  return data;
+}
+
+export async function login({ email, password }) {
+  return apiFetch('/api/auth/login', {
+    method: 'POST',
+    body: { email, password },
+  });
+}
+
+export async function fetchMe(token) {
+  return apiFetch('/api/auth/me', { token });
+}
+
+export async function updateMe(token, input) {
+  return apiFetch('/api/auth/me', { token, method: 'PATCH', body: input });
+}
+
+export async function changePassword(token, { currentPassword, newPassword }) {
+  return apiFetch('/api/auth/change-password', {
+    token,
+    method: 'POST',
+    body: { currentPassword, newPassword },
+  });
+}
+
+export async function deactivateAccount(token, { password, confirm }) {
+  return apiFetch('/api/auth/deactivate', {
+    token,
+    method: 'POST',
+    body: { password, confirm },
+  });
+}
+
+export async function forgotPassword(email) {
+  return apiFetch('/api/auth/forgot-password', {
+    method: 'POST',
+    body: { email },
+  });
+}
+
+export async function resetPassword({ token, newPassword }) {
+  return apiFetch('/api/auth/reset-password', {
+    method: 'POST',
+    body: { token, newPassword },
+  });
+}
+
+export async function submitKyc(token, input) {
+  return apiFetch('/api/auth/kyc', {
+    token,
+    method: 'POST',
+    body: input,
+  });
+}
+
+export async function fetchPaymentGateway() {
+  return apiFetch('/api/payments/gateway');
+}
+
+export async function connectPaymentGateway(token, provider) {
+  return apiFetch('/api/payments/gateway/connect', {
+    token,
+    method: 'POST',
+    body: { provider },
+  });
 }

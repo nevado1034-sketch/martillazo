@@ -13,15 +13,28 @@ import { getPaymentProvider } from './modules/payments/providers/index.js';
 import { createCache } from './redis/cache.js';
 import { createSocketServer } from './sockets/index.js';
 import { AuctionCloser } from './jobs/auctionCloser.js';
+import { EscrowAutoReleaseJob } from './jobs/escrowAutoRelease.js';
+import { ListingsService } from './modules/listings/listings.service.js';
+import { EscrowService } from './modules/escrow/escrow.service.js';
+import { SandboxEscrowProvider } from './modules/escrow/sandbox.provider.js';
 
 async function main() {
   await pingDatabase();
   console.log('[db] conexión a PostgreSQL verificada');
+  console.log(
+    `[escrow] comisión PulgasYa = ${env.pulgasyaCommissionPercent}% (PULGASYA_COMMISSION_PERCENT)`,
+  );
 
   const cache = createCache();
 
   const auctionService = new AuctionService({ pool });
   const authService = new AuthService({ pool });
+  const listingsService = new ListingsService({ pool });
+  const escrowService = new EscrowService({
+    pool,
+    provider: new SandboxEscrowProvider(),
+  });
+  listingsService.setEscrowService(escrowService);
 
   const provider = getPaymentProvider(env.paymentProvider);
   const commissionService = new CommissionService({ pool });
@@ -40,20 +53,24 @@ async function main() {
     settlementService,
     walletService,
     authService,
+    listingsService,
+    escrowService,
   });
   const { httpServer, io } = createSocketServer(app, { bidService });
 
-  httpServer.listen(env.port, () => {
+  httpServer.listen(env.port, '0.0.0.0', () => {
     console.log(
-      `[server] Martillazo API + WebSockets en http://localhost:${env.port}`,
+      `[server] PulgasYa API + WebSockets en http://0.0.0.0:${env.port}`,
     );
   });
 
   const closer = new AuctionCloser({ pool, walletService }).start();
+  const escrowJob = new EscrowAutoReleaseJob({ escrowService }).start();
 
   const shutdown = async () => {
     console.log('\n[server] cerrando...');
     closer.stop();
+    escrowJob.stop();
     await io.close();
     await pool.end();
     process.exit(0);

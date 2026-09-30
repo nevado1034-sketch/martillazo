@@ -2,14 +2,135 @@
 @tailwind components;
 @tailwind utilities;
 
-@keyframes countdown-blink {
-  0%,
-  49% {
+:root {
+  /* Paleta oficial PulgasYa (Jose) */
+  --primary-celeste: #3a7ca5;
+  --primary-hover: #2f6688;
+  --cta-orange: #ff7a59;
+  --bg-light: #f7f9fb;
+  --text-dark: #1f2937;
+
+  /* Aliases usados en componentes */
+  --brand: var(--primary-celeste);
+  --brand-deep: var(--primary-hover);
+  --brand-soft: #7aa9c4;
+  --mint: #5b9bc0;
+  --mint-soft: #d7e8f2;
+  --mint-wash: #eaf2f7;
+  --coral: var(--cta-orange);
+  --coral-deep: #e86545;
+  --coral-wash: #fff1ed;
+  --ink: var(--text-dark);
+  --ink-muted: #4b5563;
+  --ink-faint: #9ca3af;
+  --surface: var(--bg-light);
+  --line: #d9e2ea;
+  --hero-from: #d9eaf4;
+  --hero-via: #e8f1f7;
+  --hero-to: #fff2ed;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Figtree', system-ui, sans-serif;
+    color: var(--text-dark);
+    background-color: var(--bg-light);
+    background-image:
+      radial-gradient(ellipse 80% 50% at 10% -10%, var(--hero-from), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 100% 0%, var(--hero-to), transparent 50%),
+      linear-gradient(180deg, var(--bg-light), #ffffff 40%, var(--bg-light));
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .field-input {
+    @apply w-full rounded-xl border border-[var(--line)] bg-white px-3 py-2.5 text-sm outline-none transition focus:border-[var(--primary-celeste)] focus:ring-2 focus:ring-[var(--mint-soft)];
+  }
+
+  .bg-hero-atmosphere {
+    background: linear-gradient(
+      125deg,
+      var(--hero-from) 0%,
+      var(--hero-via) 42%,
+      var(--hero-to) 100%
+    );
+  }
+
+  .font-display {
+    font-family: 'Syne', 'Figtree', sans-serif;
+  }
+
+  .btn-primary {
+    @apply rounded-xl bg-[var(--primary-celeste)] text-sm font-semibold text-white transition hover:bg-[var(--primary-hover)];
+  }
+
+  .btn-cta {
+    @apply rounded-xl bg-[var(--cta-orange)] text-sm font-semibold text-white transition hover:brightness-95;
+  }
+}
+
+@layer utilities {
+  .delay-100 {
+    animation-delay: 100ms;
+  }
+  .delay-200 {
+    animation-delay: 200ms;
+  }
+  .delay-300 {
+    animation-delay: 300ms;
+  }
+}
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
     opacity: 1;
   }
-  50%,
-  100% {
-    opacity: 0.15;
+}
+
+@keyframes modal-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -24,6 +145,22 @@
   }
 }
 
-body {
-  background-color: #fffbeb;
+.animate-hero-in {
+  animation: hero-in 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-rise {
+  animation: rise 0.45s ease-out both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out both;
+}
+
+.animate-modal-up {
+  animation: modal-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-toast-in {
+  animation: toast-in 0.2s ease-out both;
 }
