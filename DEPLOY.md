@@ -13,10 +13,12 @@ Guía click-by-click en español (Agent Store): `docs/pulgasya-deploy-guide.md`.
 
 ## Comandos Render (manual)
 
-- **Root Directory:** _(vacío — raíz monorepo)_
+- **Root Directory:** _(vacío — raíz monorepo; NO `backend` ni `web`)_
 - **Build:** `npm install`
-- **Start:** `npm run start`
+- **Start:** `npm run start` _(equivale a `npm --workspace backend run start` → `node src/index.js`)_
 - **Health check:** `/health`
+- **Node:** 20.x (`engines` en `package.json`; Blueprint fija `NODE_VERSION=20.18.0`)
+- **PORT:** no lo fijes a mano — Render lo inyecta; el API usa `process.env.PORT`
 
 ## Env — Neon
 
@@ -26,7 +28,6 @@ Guía click-by-click en español (Agent Store): `docs/pulgasya-deploy-guide.md`.
 
 ```
 NODE_ENV=production
-PORT=4000
 DATABASE_URL=<neon>
 JWT_SECRET=<≥32 chars>
 JWT_EXPIRES_IN=7d
@@ -38,6 +39,8 @@ ESCROW_WEBHOOK_SECRET=<random>
 ADMIN_EMAILS=<tu@email>
 SUPPORT_EMAIL=soporte@pulgasya.com
 ```
+
+No fijes `PORT` (Render lo inyecta).
 
 `CLIENT_ORIGIN` / `ORIGINS` aceptan varios orígenes separados por coma.
 

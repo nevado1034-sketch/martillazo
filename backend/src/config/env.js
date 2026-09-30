@@ -5,6 +5,8 @@ const rawJwtSecret = process.env.JWT_SECRET;
 const nodeEnv = process.env.NODE_ENV ?? 'development';
 const isProduction = nodeEnv === 'production';
 
+const rawDatabaseUrl = process.env.DATABASE_URL?.trim() ?? '';
+
 if (isProduction) {
   if (!rawJwtSecret || rawJwtSecret === DEV_JWT_FALLBACK) {
     console.error(
@@ -15,6 +17,21 @@ if (isProduction) {
   if (rawJwtSecret.length < 32) {
     console.error(
       '[bootstrap] JWT_SECRET en producción debe tener al menos 32 caracteres.',
+    );
+    process.exit(1);
+  }
+  if (!rawDatabaseUrl) {
+    console.error(
+      '[bootstrap] DATABASE_URL es obligatorio en producción (URI de Neon con ?sslmode=require).',
+    );
+    process.exit(1);
+  }
+  if (
+    /localhost|127\.0\.0\.1/i.test(rawDatabaseUrl) ||
+    rawDatabaseUrl.includes('postgres:postgres@')
+  ) {
+    console.error(
+      '[bootstrap] DATABASE_URL en producción no puede apuntar a localhost / credenciales de desarrollo.',
     );
     process.exit(1);
   }
@@ -59,7 +76,7 @@ export const env = {
     return clientOrigins.includes(String(origin).replace(/\/$/, ''));
   },
   databaseUrl:
-    process.env.DATABASE_URL ??
+    rawDatabaseUrl ||
     'postgres://postgres:postgres@localhost:5432/martillazo',
   redisUrl: process.env.REDIS_URL,
   jwtSecret: rawJwtSecret ?? DEV_JWT_FALLBACK,

@@ -14,15 +14,16 @@ services:
     plan: starter
     region: oregon
     branch: cursor/pulgasya-mvp-e937
-    rootDir: .
+    # rootDir omitido = raíz del monorepo (NO poner "backend" ni "web")
     buildCommand: npm install
     startCommand: npm run start
     healthCheckPath: /health
     envVars:
+      - key: NODE_VERSION
+        value: "20.18.0"
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: "4000"
+      # No fijar PORT: Render inyecta el puerto y el API escucha process.env.PORT
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET

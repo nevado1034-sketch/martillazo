@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "PulgasYa — Marketplace ES de segunda mano + servicios",
+  "engines": {
+    "node": ">=18.17.0"
+  },
   "workspaces": [
     "backend",
     "web"
