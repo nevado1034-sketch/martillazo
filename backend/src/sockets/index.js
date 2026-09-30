@@ -14,7 +14,7 @@ export function createSocketServer(app, deps) {
 
   const io = new Server(httpServer, {
     cors: {
-      origin: env.clientOrigin,
+      origin: env.clientOrigins,
       credentials: true,
     },
   });

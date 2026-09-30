@@ -28,11 +28,36 @@ function parseAdminEmails(raw) {
     .filter(Boolean);
 }
 
+/**
+ * Orígenes CORS permitidos. Acepta CLIENT_ORIGIN o ORIGINS
+ * (lista separada por comas), p. ej.
+ * `https://pulgasya.com,https://www.pulgasya.com`.
+ */
+function parseClientOrigins() {
+  const raw =
+    process.env.ORIGINS?.trim() ||
+    process.env.CLIENT_ORIGIN?.trim() ||
+    'http://localhost:5173';
+  return raw
+    .split(',')
+    .map((o) => o.trim().replace(/\/$/, ''))
+    .filter(Boolean);
+}
+
+const clientOrigins = parseClientOrigins();
+
 export const env = {
   nodeEnv,
   isProduction,
   port: Number(process.env.PORT ?? 4000),
-  clientOrigin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173',
+  /** Lista de orígenes permitidos (CORS + Socket.IO). */
+  clientOrigins,
+  /** Primer origen (enlaces de email / reset). */
+  clientOrigin: clientOrigins[0] ?? 'http://localhost:5173',
+  isAllowedOrigin(origin) {
+    if (!origin) return true;
+    return clientOrigins.includes(String(origin).replace(/\/$/, ''));
+  },
   databaseUrl:
     process.env.DATABASE_URL ??
     'postgres://postgres:postgres@localhost:5432/martillazo',

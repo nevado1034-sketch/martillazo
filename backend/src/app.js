@@ -48,11 +48,12 @@ export function createApp({
   app.set('trust proxy', 1);
 
   // En desarrollo se acepta cualquier origen (incluye el celular en la LAN).
+  // En producción: CLIENT_ORIGIN / ORIGINS (coma-separados), p. ej. apex + www.
   app.use(
     cors({
       origin(origin, callback) {
         if (env.nodeEnv !== 'production' || !origin) return callback(null, true);
-        return callback(null, env.clientOrigin === origin);
+        return callback(null, env.isAllowedOrigin(origin));
       },
       credentials: true,
     }),

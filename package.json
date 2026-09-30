@@ -14,7 +14,8 @@
     "dev:web-only": "npm --workspace web run dev",
     "dev:all": "concurrently -n api,web -c blue,magenta \"npm:dev:backend\" \"npm:dev:web\"",
     "start": "npm --workspace backend run start",
-    "build": "npm --workspace web run build"
+    "build": "npm --workspace web run build",
+    "migrate": "bash scripts/migrate.sh"
   },
   "devDependencies": {
     "concurrently": "^9.0.1"
