@@ -44,7 +44,7 @@ export function registerBidSocket(io, { bidService }) {
         if (!user) {
           throw new AppError({
             code: 'UNAUTHORIZED',
-            message: 'Debes iniciar sesión para pujar',
+            message: 'Debes entrar para pujar',
             status: 401,
           });
         }

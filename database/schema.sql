@@ -400,4 +400,23 @@ INSERT INTO categories (name, slug, type, sort_order) VALUES
   ('Motos y Cuatrimotos',        'motos-cuatrimotos',       'BIENES_RAICES', 50)
 ON CONFLICT (slug) DO NOTHING;
 
+-- -----------------------------------------------------------------------------
+-- Cuentas OAuth (Google / Facebook). Ver también migrations/010_*.sql
+-- Instagram no se modela (sin Login with Instagram web estándar).
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS user_social_accounts (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id          UUID          NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider         TEXT          NOT NULL,
+  provider_user_id TEXT          NOT NULL,
+  email            CITEXT,
+  avatar_url       TEXT,
+  created_at       TIMESTAMPTZ   NOT NULL DEFAULT now(),
+  updated_at       TIMESTAMPTZ   NOT NULL DEFAULT now(),
+  CONSTRAINT chk_social_provider CHECK (provider IN ('google', 'facebook')),
+  CONSTRAINT uq_social_provider_uid UNIQUE (provider, provider_user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_social_user ON user_social_accounts (user_id);
+
 COMMIT;

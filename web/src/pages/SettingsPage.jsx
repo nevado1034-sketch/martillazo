@@ -120,7 +120,7 @@ export default function SettingsPage() {
       <Shell>
         <h1 className="font-display text-2xl font-bold">Configuración</h1>
         <p className="mt-2 text-sm text-[var(--ink-muted)]">
-          Inicia sesión para editar tu cuenta.
+          Entra para editar tu cuenta.
         </p>
         <button
           type="button"

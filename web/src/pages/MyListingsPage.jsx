@@ -59,7 +59,7 @@ export default function MyListingsPage() {
         {!token && (
           <div className="mt-8 rounded-2xl border border-[var(--line)] bg-white p-6">
             <p className="text-sm text-[var(--ink-muted)]">
-              Inicia sesión para ver tus anuncios.
+              Entra para ver tus anuncios.
             </p>
             <button
               type="button"
