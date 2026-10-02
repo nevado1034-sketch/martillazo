@@ -121,4 +121,25 @@ export const env = {
   smtpPass: process.env.SMTP_PASS ?? '',
   smtpFrom: process.env.SMTP_FROM ?? 'PulgasYa <noreply@pulgasya.local>',
   supportEmail: process.env.SUPPORT_EMAIL ?? 'soporte@pulgasya.com',
+
+  /**
+   * URL pública del API (sin slash final). Obligatoria para OAuth redirect_uri.
+   * Prod: https://martillazo.onrender.com
+   * Local: http://localhost:4000
+   */
+  publicApiUrl: (
+    process.env.PUBLIC_API_URL ||
+    process.env.API_PUBLIC_URL ||
+    ''
+  )
+    .trim()
+    .replace(/\/$/, ''),
+
+  // Google OAuth 2.0 / OpenID Connect
+  googleClientId: process.env.GOOGLE_CLIENT_ID?.trim() ?? '',
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET?.trim() ?? '',
+
+  // Meta Facebook Login (Instagram Basic Display no es “Login with Instagram” web)
+  facebookAppId: process.env.FACEBOOK_APP_ID?.trim() ?? '',
+  facebookAppSecret: process.env.FACEBOOK_APP_SECRET?.trim() ?? '',
 };

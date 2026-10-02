@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { useAuth } from '../../store/AuthContext.jsx';
 import { useToast } from '../ui/Toast.jsx';
+import SocialAuthButtons from './SocialAuthButtons.jsx';
 
 export default function AuthModal() {
   const { authOpen, setAuthOpen, authIntent, login, register } = useAuth();
@@ -70,8 +71,8 @@ export default function AuthModal() {
         </h2>
         <p className="mt-1 text-sm text-[var(--ink-muted)]">
           {mode === 'login'
-            ? 'Usa el correo con el que te registraste.'
-            : 'Necesitas WhatsApp para que compradores y vendedores se contacten.'}
+            ? 'Usa el correo con el que te registraste o un acceso rápido.'
+            : 'Necesitas WhatsApp para que compradores y vendedores se contacten. También puedes usar Google o Facebook.'}
         </p>
 
         <div className="mt-4 flex gap-2 rounded-xl bg-[var(--surface)] p-1">
@@ -95,7 +96,15 @@ export default function AuthModal() {
           </button>
         </div>
 
-        <form onSubmit={submit} className="mt-4 space-y-3">
+        <SocialAuthButtons disabled={busy} />
+
+        <div className="my-4 flex items-center gap-3">
+          <div className="h-px flex-1 bg-[var(--line)]" />
+          <span className="text-xs font-medium text-[var(--ink-faint)]">o con correo</span>
+          <div className="h-px flex-1 bg-[var(--line)]" />
+        </div>
+
+        <form onSubmit={submit} className="space-y-3">
           {mode === 'register' && (
             <>
               <Field label="Nombre" htmlFor="auth-name">

@@ -10,6 +10,7 @@ import {
   changePassword as apiChangePassword,
   clearSession,
   deactivateAccount as apiDeactivate,
+  exchangeOauthCode as apiExchangeOauth,
   fetchMe,
   loadSession,
   login as apiLogin,
@@ -72,6 +73,11 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(
     async (input) => applySession(await apiLogin(input)),
+    [applySession],
+  );
+
+  const completeOauth = useCallback(
+    async (code) => applySession(await apiExchangeOauth(code)),
     [applySession],
   );
 
@@ -139,6 +145,7 @@ export function AuthProvider({ children }) {
       booting,
       login,
       register,
+      completeOauth,
       logout,
       updateProfile,
       changePassword,
@@ -155,6 +162,7 @@ export function AuthProvider({ children }) {
       booting,
       login,
       register,
+      completeOauth,
       logout,
       updateProfile,
       changePassword,

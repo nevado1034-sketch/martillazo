@@ -9,7 +9,7 @@ Guía click-by-click en español (Agent Store): `docs/pulgasya-deploy-guide.md`.
 | `web/vercel.json` | SPA rewrites + build Vite |
 | `render.yaml` | Blueprint Render (API Node) |
 | `backend/Dockerfile` | Alternativa Docker en Render |
-| `scripts/migrate.sh` | `schema.sql` + migraciones `002`…`009` |
+| `scripts/migrate.sh` | `schema.sql` + migraciones `002`…`010` |
 
 ## Comandos Render (manual)
 
@@ -38,11 +38,20 @@ JOB_SECRET=<random>
 ESCROW_WEBHOOK_SECRET=<random>
 ADMIN_EMAILS=<tu@email>
 SUPPORT_EMAIL=soporte@pulgasya.com
+
+# OAuth social (opcional hasta crear apps; botones muestran «Próximamente»)
+PUBLIC_API_URL=https://martillazo.onrender.com
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+FACEBOOK_APP_ID=
+FACEBOOK_APP_SECRET=
 ```
 
 No fijes `PORT` (Render lo inyecta).
 
 `CLIENT_ORIGIN` / `ORIGINS` aceptan varios orígenes separados por coma.
+
+Tras OAuth: aplica `database/migrations/010_user_social_accounts.sql` en Neon. Guía: Agent Store `docs/pulgasya-social-login.md`.
 
 ## Env — Vercel (Root Directory = `web`)
 

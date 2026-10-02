@@ -82,13 +82,9 @@ function normalizePhone(phone) {
 }
 
 /**
- * Autenticación social. En desarrollo, el proveedor se simula con un perfil
- * recibido en el body (equivalente a lo que devolvería el callback OAuth de
- * Google/Facebook). En producción se debe intercambiar el `code` por tokens.
- *
- * El control de clientes vive en la tabla `users`: cada correo social distinto
- * crea (o actualiza) un registro — de ahí se sabe quién publica (seller_id en
- * auctions) y quién puja (bidder_id en bids).
+ * Autenticación social (Google / Facebook) vía authorization code.
+ * Vincula provider + provider_user_id en user_social_accounts; si el email
+ * viene verificado y ya existe un usuario, enlaza la cuenta social.
  */
 export class AuthService {
   constructor({ pool }) {
@@ -178,20 +174,48 @@ export class AuthService {
     return { token: issueToken(user), user: toPublicUser(user, paymentCard) };
   }
 
-  async loginWithSocial({ provider, email, fullName, phone, avatarUrl }) {
-    const normalizedEmail = String(email ?? '').trim().toLowerCase();
-    if (!EMAIL_RE.test(normalizedEmail)) {
+  /**
+   * Login/registro OAuth. Requiere providerUserId.
+   * - Si ya hay vínculo social → esa cuenta.
+   * - Si email verificado coincide con users.email → enlaza y entra.
+   * - Si no → crea usuario (password placeholder no usable) + vínculo.
+   */
+  async loginWithSocial({
+    provider,
+    providerUserId,
+    email,
+    emailVerified = false,
+    fullName,
+    phone,
+    avatarUrl,
+  }) {
+    const providerKey = String(provider || '')
+      .trim()
+      .toLowerCase();
+    if (!['google', 'facebook'].includes(providerKey)) {
       throw new AppError({
-        code: 'INVALID_EMAIL',
-        message: 'El correo es inválido',
-        status: 422,
+        code: 'UNSUPPORTED_PROVIDER',
+        message: 'Proveedor social no soportado',
+        status: 400,
       });
     }
-    const name = String(fullName ?? '').trim();
-    if (!name) {
+    const pid = String(providerUserId ?? '').trim();
+    if (!pid) {
       throw new AppError({
-        code: 'INVALID_NAME',
-        message: 'El nombre es obligatorio',
+        code: 'OAUTH_PROFILE_ERROR',
+        message: 'El proveedor no devolvió un identificador de usuario',
+        status: 401,
+      });
+    }
+
+    const name = String(fullName ?? '').trim() || 'Usuario PulgasYa';
+    const normalizedEmail = email
+      ? String(email).trim().toLowerCase()
+      : null;
+    if (normalizedEmail && !EMAIL_RE.test(normalizedEmail)) {
+      throw new AppError({
+        code: 'INVALID_EMAIL',
+        message: 'El correo del proveedor es inválido',
         status: 422,
       });
     }
@@ -200,30 +224,73 @@ export class AuthService {
     try {
       await client.query('BEGIN');
 
-      const { rows: [existing] } = await client.query(
-        'SELECT * FROM users WHERE email = $1 FOR UPDATE',
-        [normalizedEmail],
+      const { rows: [linked] } = await client.query(
+        `SELECT u.*
+         FROM user_social_accounts s
+         JOIN users u ON u.id = s.user_id
+         WHERE s.provider = $1 AND s.provider_user_id = $2
+         FOR UPDATE OF u`,
+        [providerKey, pid],
       );
 
-      let user = existing;
-      if (!user) {
-        // Registro: nuevo cliente se crea y queda controlado en `users`.
-        const { rows: [created] } = await client.query(
-          `INSERT INTO users
-             (id, email, password_hash, full_name, phone, avatar_url, kyc_status, role, last_login_at)
-           VALUES ($1, $2, $3, $4, $5, $6, 'NOT_STARTED', 'USER', now())
-           RETURNING *`,
-          [
-            randomUUID(),
-            normalizedEmail,
-            `social:${provider}:no-password`,
-            name,
-            phone ? String(phone).trim() : null,
-            avatarUrl ?? null,
-          ],
+      let user = linked || null;
+
+      if (!user && normalizedEmail && emailVerified) {
+        const { rows: [byEmail] } = await client.query(
+          'SELECT * FROM users WHERE email = $1 FOR UPDATE',
+          [normalizedEmail],
         );
-        user = created;
+        if (byEmail && byEmail.is_active !== false && !byEmail.deleted_at) {
+          user = byEmail;
+        }
+      }
+
+      if (!user) {
+        if (!normalizedEmail) {
+          throw new AppError({
+            code: 'EMAIL_REQUIRED',
+            message:
+              'Tu cuenta social no compartió un correo. Usa Facebook/Google con email visible o regístrate con correo.',
+            status: 422,
+          });
+        }
+        const placeholder = `social:${providerKey}:no-password`;
+        try {
+          const { rows: [created] } = await client.query(
+            `INSERT INTO users
+               (id, email, password_hash, full_name, phone, avatar_url, kyc_status, role, last_login_at)
+             VALUES ($1, $2, $3, $4, $5, $6, 'NOT_STARTED', 'USER', now())
+             RETURNING *`,
+            [
+              randomUUID(),
+              normalizedEmail,
+              placeholder,
+              name,
+              phone ? String(phone).trim() : null,
+              avatarUrl ?? null,
+            ],
+          );
+          user = created;
+        } catch (err) {
+          if (err.code === '23505') {
+            // Email ya existe pero no verificado por el proveedor → pedir login password
+            throw new AppError({
+              code: 'EMAIL_TAKEN',
+              message:
+                'Ya existe una cuenta con ese correo. Entra con tu contraseña para vincularla, o usa el mismo proveedor con email verificado.',
+              status: 409,
+            });
+          }
+          throw err;
+        }
       } else {
+        if (user.is_active === false || user.deleted_at) {
+          throw new AppError({
+            code: 'ACCOUNT_DISABLED',
+            message: 'Esta cuenta está cerrada o desactivada',
+            status: 403,
+          });
+        }
         await client.query(
           `UPDATE users
            SET full_name = COALESCE(NULLIF($1, ''), full_name),
@@ -233,12 +300,30 @@ export class AuthService {
            WHERE id = $4`,
           [name, phone ?? '', avatarUrl ?? '', user.id],
         );
-        user = { ...user, full_name: name, last_login_at: new Date() };
+        const { rows: [fresh] } = await client.query(
+          'SELECT * FROM users WHERE id = $1',
+          [user.id],
+        );
+        user = fresh;
       }
+
+      await client.query(
+        `INSERT INTO user_social_accounts
+           (user_id, provider, provider_user_id, email, avatar_url)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (provider, provider_user_id)
+         DO UPDATE SET
+           user_id = EXCLUDED.user_id,
+           email = COALESCE(EXCLUDED.email, user_social_accounts.email),
+           avatar_url = COALESCE(EXCLUDED.avatar_url, user_social_accounts.avatar_url),
+           updated_at = now()`,
+        [user.id, providerKey, pid, normalizedEmail, avatarUrl ?? null],
+      );
 
       await client.query('COMMIT');
 
-      return { token: issueToken(user), user: toPublicUser(user) };
+      const paymentCard = await this.getPaymentCard(user.id);
+      return { token: issueToken(user), user: toPublicUser(user, paymentCard) };
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;

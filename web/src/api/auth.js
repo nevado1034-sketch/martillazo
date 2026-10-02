@@ -88,6 +88,18 @@ export async function fetchPaymentGateway() {
   return apiFetch('/api/payments/gateway');
 }
 
+export async function fetchOauthProviders() {
+  return apiFetch('/api/auth/oauth/providers');
+}
+
+/** Intercambia ticket OAuth de corta vida por sesión JWT. */
+export async function exchangeOauthCode(code) {
+  return apiFetch('/api/auth/oauth/exchange', {
+    method: 'POST',
+    body: { code },
+  });
+}
+
 export async function connectPaymentGateway(token, provider) {
   return apiFetch('/api/payments/gateway/connect', {
     token,

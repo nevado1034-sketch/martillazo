@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Aplica schema + migraciones 002…009 contra DATABASE_URL (Neon / local / Render shell).
+# Aplica schema + migraciones 002…010 contra DATABASE_URL (Neon / local / Render shell).
 # NO aplica seed demo. Uso:
 #   export DATABASE_URL='postgresql://…@….neon.tech/neondb?sslmode=require'
 #   bash scripts/migrate.sh

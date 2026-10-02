@@ -6,6 +6,14 @@ export function createAuthRouter(controller) {
 
   router.post('/register', controller.register);
   router.post('/login', controller.login);
+
+  // OAuth 2.0 / OpenID (Google, Facebook)
+  router.get('/oauth/providers', controller.oauthProviders);
+  router.post('/oauth/exchange', controller.oauthExchange);
+  router.get('/oauth/:provider', controller.oauthStart);
+  router.get('/oauth/:provider/callback', controller.oauthCallback);
+
+  // Dev-only stub (bloqueado en production)
   router.post('/social/:provider', controller.socialLogin);
 
   router.post('/forgot-password', controller.forgotPassword);

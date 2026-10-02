@@ -27,8 +27,8 @@ export default function AuthEntryPage({ mode = 'register' }) {
         </h1>
         <p className="mt-3 text-sm text-[var(--ink-muted)]">
           {mode === 'login'
-            ? 'Usa el formulario para iniciar sesión.'
-            : 'Completa el registro con correo, contraseña y WhatsApp (código 51).'}
+            ? 'Usa correo y contraseña, o acceso rápido con Google / Facebook.'
+            : 'Regístrate con correo, WhatsApp (código 51), o con Google / Facebook.'}
         </p>
         <button
           type="button"

@@ -21,6 +21,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import CookiePage from './pages/CookiePage.jsx';
 import MyOrdersPage from './pages/MyOrdersPage.jsx';
 import OrderDetailPage from './pages/OrderDetailPage.jsx';
+import OAuthCallbackPage from './pages/OAuthCallbackPage.jsx';
 
 export default function App() {
   return (
@@ -45,6 +46,7 @@ export default function App() {
               <Route path="/cookies" element={<CookiePage />} />
               <Route path="/recuperar" element={<ForgotPasswordPage />} />
               <Route path="/restablecer" element={<ResetPasswordPage />} />
+              <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
               <Route path="/registro" element={<AuthEntryPage mode="register" />} />
               <Route path="/entrar" element={<AuthEntryPage mode="login" />} />
               <Route path="/login" element={<AuthEntryPage mode="login" />} />
