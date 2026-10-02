@@ -67,7 +67,7 @@ export function assertProviderConfigured(provider) {
       code: 'OAUTH_NOT_CONFIGURED',
       message:
         entry?.reason ||
-        `El inicio de sesión con ${provider} aún no está configurado`,
+        `El acceso con ${provider} aún no está configurado`,
       status: 503,
     });
   }

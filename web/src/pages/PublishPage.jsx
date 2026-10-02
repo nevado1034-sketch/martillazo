@@ -204,7 +204,7 @@ export default function PublishPage() {
                 onClick={() => ensureAuth()}
                 className="rounded-xl border border-dashed border-[var(--brand)] bg-[var(--mint-wash)] px-4 py-3 text-left text-sm text-[var(--brand-deep)]"
               >
-                Primero inicia sesión o crea una cuenta →
+                Primero entra o crea una cuenta →
               </button>
             )}
             <button
@@ -457,7 +457,7 @@ export default function PublishPage() {
                 onClick={() => navigate('/')}
                 className="rounded-xl border border-[var(--line)] px-5 py-3 text-sm font-semibold"
               >
-                Ir al inicio
+                ← Volver
               </button>
             </div>
           </div>

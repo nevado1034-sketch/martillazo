@@ -49,7 +49,7 @@ function verifyOauthTicket(token) {
   } catch {
     throw new AppError({
       code: 'INVALID_OAUTH_TICKET',
-      message: 'El enlace de inicio de sesión caducó. Intenta de nuevo.',
+      message: 'El enlace para entrar caducó. Intenta de nuevo.',
       status: 400,
     });
   }

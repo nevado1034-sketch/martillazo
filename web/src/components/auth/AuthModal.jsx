@@ -27,9 +27,9 @@ export default function AuthModal() {
 
   const intentLabel =
     authIntent === 'publish'
-      ? 'Inicia sesión para publicar'
+      ? 'Entra para publicar'
       : authIntent === 'offer'
-        ? 'Inicia sesión para proponer un precio'
+        ? 'Entra para proponer un precio'
         : 'Entra a PulgasYa';
 
   const submit = async (e) => {

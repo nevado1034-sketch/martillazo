@@ -77,7 +77,7 @@ export default function SocialAuthButtons({ disabled = false }) {
         onClick={() => start('facebook', facebook.enabled)}
       />
       <p className="text-center text-[11px] leading-snug text-[var(--ink-faint)]">
-        Instagram no ofrece inicio de sesión web; usa Facebook (misma cuenta Meta)
+        Instagram no permite entrar desde la web; usa Facebook (misma cuenta Meta)
         si entras con Meta.
       </p>
     </div>

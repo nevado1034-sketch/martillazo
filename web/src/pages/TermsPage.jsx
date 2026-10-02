@@ -229,7 +229,7 @@ export default function TermsPage() {
         </Link>
         {' · '}
         <Link to="/" className="font-semibold text-[var(--cta-orange)] hover:underline">
-          Volver al inicio
+          Volver a PulgasYa
         </Link>
       </p>
     </LegalShell>

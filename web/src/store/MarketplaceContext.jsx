@@ -62,7 +62,7 @@ export function MarketplaceProvider({ children }) {
 
   const publishListing = useCallback(
     async (input) => {
-      if (!token) throw new Error('Debes iniciar sesión para publicar');
+      if (!token) throw new Error('Debes entrar para publicar');
       const created = normalizeListing(await createListing(token, input));
       setListings((prev) => [created, ...prev.filter((l) => l.id !== created.id)]);
       return created;
@@ -72,7 +72,7 @@ export function MarketplaceProvider({ children }) {
 
   const makeOffer = useCallback(
     async ({ listingId, amount, message }) => {
-      if (!token) throw new Error('Debes iniciar sesión para ofertar');
+      if (!token) throw new Error('Debes entrar para ofertar');
       return createOffer(token, listingId, { amount, message });
     },
     [token],
