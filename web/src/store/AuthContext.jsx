@@ -11,6 +11,7 @@ import {
   clearSession,
   deactivateAccount as apiDeactivate,
   fetchMe,
+  googleLogin,
   loadSession,
   login as apiLogin,
   register as apiRegister,
@@ -72,6 +73,11 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(
     async (input) => applySession(await apiLogin(input)),
+    [applySession],
+  );
+
+  const loginWithGoogle = useCallback(
+    async (idToken) => applySession(await googleLogin(idToken)),
     [applySession],
   );
 
@@ -138,6 +144,7 @@ export function AuthProvider({ children }) {
       token: session?.token ?? null,
       booting,
       login,
+      loginWithGoogle,
       register,
       logout,
       updateProfile,
@@ -154,6 +161,7 @@ export function AuthProvider({ children }) {
       session,
       booting,
       login,
+      loginWithGoogle,
       register,
       logout,
       updateProfile,

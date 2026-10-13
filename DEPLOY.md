@@ -38,6 +38,8 @@ JOB_SECRET=<random>
 ESCROW_WEBHOOK_SECRET=<random>
 ADMIN_EMAILS=<tu@email>
 SUPPORT_EMAIL=soporte@pulgasya.com
+FIREBASE_SERVICE_ACCOUNT_KEY=<JSON string de la service account>
+FIREBASE_PROJECT_ID=<projectId de Firebase>
 ```
 
 No fijes `PORT` (Render lo inyecta).
@@ -48,6 +50,12 @@ No fijes `PORT` (Render lo inyecta).
 
 ```
 VITE_API_BASE_URL=https://api.pulgasya.com
+VITE_FIREBASE_API_KEY=<...>
+VITE_FIREBASE_AUTH_DOMAIN=<...>
+VITE_FIREBASE_PROJECT_ID=<...>
+VITE_FIREBASE_STORAGE_BUCKET=<...>
+VITE_FIREBASE_MESSAGING_SENDER_ID=<...>
+VITE_FIREBASE_APP_ID=<...>
 ```
 
 No pongas `VITE_ENABLE_SANDBOX_PAY=true`.

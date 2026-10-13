@@ -32,10 +32,22 @@ export class AuthController {
 
   /**
    * POST /api/auth/social/:provider
-   * Simulación de login social (Google/Facebook) en desarrollo.
+   * Google → verifica el ID token de Firebase y crea/liga la cuenta.
+   * Otros proveedores: simulación en desarrollo (body con perfil).
    */
   socialLogin = async (req, res, next) => {
     try {
+      const { provider } = req.params;
+      if (provider === 'google') {
+        const bearer = req.headers.authorization?.startsWith('Bearer ')
+          ? req.headers.authorization.slice(7)
+          : '';
+        const result = await this.service.loginWithGoogle({
+          idToken: req.body?.idToken || bearer,
+          phone: req.body?.phone,
+        });
+        return res.json({ data: result });
+      }
       if (env.nodeEnv === 'production') {
         return res.status(501).json({
           error: {
@@ -44,7 +56,6 @@ export class AuthController {
           },
         });
       }
-      const { provider } = req.params;
       const { email, fullName, phone, avatarUrl } = req.body ?? {};
       const result = await this.service.loginWithSocial({
         provider,

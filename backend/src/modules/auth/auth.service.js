@@ -196,13 +196,55 @@ export class AuthService {
       });
     }
 
+    return this.#upsertSocialUser({
+      provider,
+      email: normalizedEmail,
+      fullName: name,
+      phone,
+      avatarUrl,
+    });
+  }
+
+  /** Google real: verifica el ID token contra Firebase antes de crear/ligar cuenta. */
+  async loginWithGoogle({ idToken, phone }) {
+    const { authAdmin } = await import('../../config/firebase.js');
+    let payload;
+    try {
+      payload = await authAdmin.verifyIdToken(String(idToken ?? ''));
+    } catch {
+      throw new AppError({
+        code: 'INVALID_GOOGLE_TOKEN',
+        message: 'No se pudo verificar la sesión de Google',
+        status: 401,
+      });
+    }
+    if (!payload?.email) {
+      throw new AppError({
+        code: 'INVALID_GOOGLE_TOKEN',
+        message: 'Tu cuenta de Google no tiene un correo válido',
+        status: 401,
+      });
+    }
+    const name =
+      String(payload.name || payload.email || '').trim() ||
+      payload.email;
+    return this.#upsertSocialUser({
+      provider: 'google',
+      email: String(payload.email).trim().toLowerCase(),
+      fullName: name,
+      phone,
+      avatarUrl: payload.picture || null,
+    });
+  }
+
+  async #upsertSocialUser({ provider, email, fullName, phone, avatarUrl }) {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
 
       const { rows: [existing] } = await client.query(
         'SELECT * FROM users WHERE email = $1 FOR UPDATE',
-        [normalizedEmail],
+        [email],
       );
 
       let user = existing;
@@ -215,9 +257,9 @@ export class AuthService {
            RETURNING *`,
           [
             randomUUID(),
-            normalizedEmail,
+            email,
             `social:${provider}:no-password`,
-            name,
+            fullName,
             phone ? String(phone).trim() : null,
             avatarUrl ?? null,
           ],
@@ -231,9 +273,9 @@ export class AuthService {
                avatar_url = COALESCE(NULLIF($3, ''), avatar_url),
                last_login_at = now()
            WHERE id = $4`,
-          [name, phone ?? '', avatarUrl ?? '', user.id],
+          [fullName, phone ?? '', avatarUrl ?? '', user.id],
         );
-        user = { ...user, full_name: name, last_login_at: new Date() };
+        user = { ...user, full_name: fullName, last_login_at: new Date() };
       }
 
       await client.query('COMMIT');

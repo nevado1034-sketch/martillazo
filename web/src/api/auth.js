@@ -38,6 +38,17 @@ export async function login({ email, password }) {
   });
 }
 
+export async function socialLogin({ provider, idToken, phone }) {
+  return apiFetch(`/api/auth/social/${provider}`, {
+    method: 'POST',
+    body: { idToken, phone },
+  });
+}
+
+export async function googleLogin(idToken) {
+  return socialLogin({ provider: 'google', idToken });
+}
+
 export async function fetchMe(token) {
   return apiFetch('/api/auth/me', { token });
 }
