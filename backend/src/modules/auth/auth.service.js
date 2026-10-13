@@ -208,6 +208,14 @@ export class AuthService {
   /** Google real: verifica el ID token contra Firebase antes de crear/ligar cuenta. */
   async loginWithGoogle({ idToken, phone }) {
     const { authAdmin } = await import('../../config/firebase.js');
+    if (!authAdmin) {
+      throw new AppError({
+        code: 'FIREBASE_NOT_CONFIGURED',
+        message:
+          'El servidor no tiene FIREBASE_PROJECT_ID / FIREBASE_SERVICE_ACCOUNT_KEY configurado',
+        status: 503,
+      });
+    }
     let payload;
     try {
       payload = await authAdmin.verifyIdToken(String(idToken ?? ''));
