@@ -5,12 +5,6 @@ import SiteFooter from '../components/layout/SiteFooter.jsx';
 export default function TermsPage() {
   return (
     <LegalShell title="Términos y condiciones">
-      <p className="text-xs text-[var(--ink-faint)]">
-        PulgasYa (también «Pulgas Ya») · Perú · Última actualización: septiembre
-        2026. Este texto es orientativo para el producto; no sustituye asesoría
-        legal formal. [Revisar con abogado antes de producción.]
-      </p>
-
       <H>1. Aspectos generales y rol de la plataforma</H>
       <P>
         PulgasYa es un marketplace digital que facilita el encuentro entre
