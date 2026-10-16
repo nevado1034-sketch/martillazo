@@ -43,7 +43,7 @@ export default function PrivacyPage() {
               estado pendiente/verificado.
             </li>
             <li>
-              Pagos (MVP): marca, últimos 4 dígitos, vencimiento y titular —
+              Pagos: marca, últimos 4 dígitos, vencimiento y titular —
               <strong> nunca</strong> el PAN completo ni el CVV.
             </li>
             <li>Uso: anuncios, ofertas, registros técnicos de seguridad.</li>
@@ -88,7 +88,7 @@ export default function PrivacyPage() {
           <P>
             Usamos almacenamiento local para sesión y preferencias esenciales
             del sitio. No vendemos datos personales a terceros con fines
-            publicitarios en este MVP.
+            publicitarios.
           </P>
 
           <H>8. Transferencias y seguridad</H>

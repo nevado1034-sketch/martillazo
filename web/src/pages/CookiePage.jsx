@@ -12,7 +12,7 @@ export default function CookiePage() {
         <p className="mt-4 text-sm leading-relaxed text-[var(--ink)]">
           PulgasYa usa almacenamiento local del navegador para mantener tu
           sesión y preferencias esenciales. No usamos cookies de publicidad de
-          terceros en este MVP. Más detalle en la{' '}
+          terceros. Más detalle en la{' '}
           <Link to="/privacidad" className="text-[var(--primary-celeste)] hover:underline">
             política de privacidad
           </Link>

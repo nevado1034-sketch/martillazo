@@ -653,7 +653,7 @@ export default function SettingsPage() {
           <p className="text-xs text-[var(--ink-muted)]">
             Estado:{' '}
             <strong>{KYC_LABEL[user.kycStatus] || user.kycStatus}</strong>
-            . La aprobación admin es stub en este MVP.
+            . La verificación la realiza el equipo de PulgasYa.
           </p>
           <Field label="Tipo" htmlFor="kyc-type">
             <select

@@ -86,7 +86,7 @@ export default function TermsPage() {
         liberación se pausa hasta mediación.
       </P>
       <P>
-        En esta versión MVP, el cobro puede operar en modo sandbox etiquetado.
+        El cobro puede operar en modo sandbox etiquetado.
         PulgasYa puede almacenar solo metadatos de tarjeta (marca, últimos 4
         dígitos, vencimiento, titular) y nunca el número completo ni el CVV.
         Cuando se active una pasarela (Culqi, Niubiz o Mercado Pago), aplicarán
