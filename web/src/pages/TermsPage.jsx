@@ -7,8 +7,8 @@ export default function TermsPage() {
     <LegalShell title="Términos y condiciones" updated="Octubre de 2026">
       <p className="rounded-xl border border-[var(--line)] bg-[var(--mint-wash)] px-4 py-3 text-sm text-[var(--ink)]">
         <strong>Titular:</strong> Lans Corp S.A.C. — RUC 20608151291 — con
-        domicilio en Lima, Perú. Opera la plataforma bajo la marca «PulgasYa»
-        (también «Pulgas Ya»). Contacto:{' '}
+        domicilio en Av. Arenales 2586, San Isidro, Lima, Perú. Opera la
+        plataforma bajo la marca «PulgasYa» (también «Pulgas Ya»). Contacto:{' '}
         <a
           href="mailto:soporte@pulgasya.com"
           className="text-[var(--primary-celeste)] hover:underline"
@@ -316,7 +316,8 @@ export default function TermsPage() {
       <P>
         Estos Términos se rigen por las leyes de la República del Perú. Salvo
         norma imperativa en contrario, las controversias se someten a los jueces
-        y tribunales del domicilio del titular (Lima, Perú). Sin perjuicio de
+        y tribunales del domicilio del titular (Av. Arenales 2586, San Isidro,
+        Lima, Perú). Sin perjuicio de
         ello, los consumidores conservan el derecho de acudir a los órganos
         competentes, incluido el Instituto Nacional de Defensa de la Competencia
         y de la Protección de la Propiedad Intelectual (INDECOPI), y de usar

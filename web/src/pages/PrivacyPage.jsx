@@ -21,7 +21,8 @@ export default function PrivacyPage() {
           <P>
             El responsable del tratamiento de tus datos personales es{' '}
             <strong>Lans Corp S.A.C.</strong>, con RUC 20608151291 y domicilio
-            en Lima, Perú, que opera la plataforma PulgasYa. Contacto del
+            en Av. Arenales 2586, San Isidro, Lima, Perú, que opera la
+            plataforma PulgasYa. Contacto del
             responsable y del Oficial de Protección de Datos (DPD):{' '}
             <a
               href="mailto:privacidad@pulgasya.com"
