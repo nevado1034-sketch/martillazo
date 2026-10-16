@@ -25,10 +25,10 @@ export default function PrivacyPage() {
             plataforma PulgasYa. Contacto del
             responsable y del Oficial de Protección de Datos (DPD):{' '}
             <a
-              href="mailto:privacidad@pulgasya.com"
+              href="mailto:soporte@pulgasya.com"
               className="text-[var(--primary-celeste)] hover:underline"
             >
-              privacidad@pulgasya.com
+              soporte@pulgasya.com
             </a>
             {' · '}
             <Link to="/ayuda" className="text-[var(--primary-celeste)] hover:underline">
@@ -152,10 +152,10 @@ export default function PrivacyPage() {
             Cancelación y Oposición</strong>, así como los demás derechos
             reconocidos por ley, escribiendo a{' '}
             <a
-              href="mailto:privacidad@pulgasya.com"
+              href="mailto:soporte@pulgasya.com"
               className="text-[var(--primary-celeste)] hover:underline"
             >
-              privacidad@pulgasya.com
+              soporte@pulgasya.com
             </a>
             , sujeto a verificación de identidad. Las solicitudes son
             gratuitas y se atienden dentro de los plazos previstos en el
@@ -189,10 +189,10 @@ export default function PrivacyPage() {
             Para cualquier consulta sobre privacidad o el ejercicio de tus
             derechos, escríbenos a{' '}
             <a
-              href="mailto:privacidad@pulgasya.com"
+              href="mailto:soporte@pulgasya.com"
               className="text-[var(--primary-celeste)] hover:underline"
             >
-              privacidad@pulgasya.com
+              soporte@pulgasya.com
             </a>
             . Consulta también nuestros{' '}
             <Link to="/terminos" className="text-[var(--primary-celeste)] hover:underline">
