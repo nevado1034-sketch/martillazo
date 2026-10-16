@@ -11,9 +11,8 @@ export default function PrivacyPage() {
           Política de privacidad
         </h1>
         <p className="mt-2 text-xs text-[var(--ink-faint)]">
-          MVP PulgasYa — Perú · septiembre 2026. Orientativo; [revisar con
-          abogado / DPD antes de producción]. Aplicable a la Ley de Protección
-          de Datos Personales (Ley N.º 29733) y su reglamento.
+          Aplicable a la Ley de Protección de Datos Personales (Ley N.º 29733) y
+          su reglamento.
         </p>
 
         <div className="mt-6 space-y-4 text-sm leading-relaxed text-[var(--ink)]">
