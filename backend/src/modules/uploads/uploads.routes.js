@@ -1,33 +1,30 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { readFile, unlink } from 'node:fs/promises';
-import { extname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { extname, join } from 'node:path';
+import { tmpdir } from 'node:os';
 import multer from 'multer';
 import { Router } from 'express';
 import sharp from 'sharp';
 import heicConvert from 'heic-convert';
-import { env } from '../../config/env.js';
 import { authenticate } from '../../middleware/auth.js';
 import { AppError } from '../../utils/errors.js';
+import { MEDIA_DIR, saveBuffer, saveFile } from '../../services/storage.js';
 
 /**
  * Uploads de media del vendedor (fotos y video corto del producto).
  *
- * Guarda los archivos en UPLOADS_DIR (por defecto <backend>/uploads/media) y
- * los sirve estáticamente en /uploads. En producción configura UPLOADS_DIR a
- * un disco persistente: el disco local de Render es efímero y borra las fotos
- * en cada redeploy.
+ * Los archivos se escriben primero en una carpeta temporal y luego se guardan
+ * con el driver de almacenamiento activo (local o S3/R2). Ver services/storage.js.
  *
- * Las fotos se normalizan a JPEG (máx. 1600 px) para que se vean igual en
- * iPhone, Android y escritorio. HEIC/HEIF de iPhone se convierte a JPEG.
+ * Las fotos se normalizan a JPEG (máx. 1600 px, orientación EXIF corregida)
+ * para que se vean igual en iPhone, Android y escritorio. HEIC/HEIF de iPhone
+ * se convierte a JPEG.
  */
 
-const DEFAULT_MEDIA_DIR = resolve(
-  fileURLToPath(new URL('../../../uploads/media', import.meta.url)),
-);
-const MEDIA_DIR = env.uploadsDir ? resolve(env.uploadsDir) : DEFAULT_MEDIA_DIR;
-mkdirSync(MEDIA_DIR, { recursive: true });
+// Temporales de multer: fuera del disco de uploads, para no servirlos nunca.
+const TMP_DIR = join(tmpdir(), 'pulgasya-uploads');
+mkdirSync(TMP_DIR, { recursive: true });
 
 const IMAGE_EXTS = new Set([
   '.jpg',
@@ -60,7 +57,7 @@ const HEIC_EXT_RE = /\.(heic|heif)$/i;
 // (HEIC, MOV, 3GP, nombres sin extensión). La extensión se deriva del MIME.
 function makeUploader({ mimeRe, exts, maxBytes, kind }) {
   const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, MEDIA_DIR),
+    destination: (_req, _file, cb) => cb(null, TMP_DIR),
     filename: (_req, file, cb) => {
       const ext = extname(file.originalname).toLowerCase();
       const safeExt = exts.has(ext) ? ext : MIME_TO_EXT[file.mimetype] ?? '';
@@ -107,6 +104,14 @@ const videoUploader = makeUploader({
   kind: 'video',
 });
 
+function storageError() {
+  return new AppError({
+    code: 'STORAGE_FAILED',
+    message: 'No pudimos guardar tu archivo. Intenta de nuevo en unos minutos.',
+    status: 502,
+  });
+}
+
 /**
  * Convierte la foto subida a JPEG optimizado (y corrige la orientación EXIF).
  * HEIC/HEIF se decodifica con libheif (JS/WASM) porque los binarios de sharp
@@ -117,6 +122,7 @@ async function processPhoto(file) {
   const isHeic =
     HEIC_MIME_RE.test(file.mimetype || '') || HEIC_EXT_RE.test(originalExt);
 
+  let jpeg;
   try {
     let input = file.path;
     if (isHeic) {
@@ -124,41 +130,35 @@ async function processPhoto(file) {
       input = await heicConvert({ buffer, format: 'JPEG', quality: 0.9 });
     }
 
-    const filename = `${randomUUID()}.jpg`;
-    const outputPath = join(MEDIA_DIR, filename);
+    const { data } = await sharp(input)
+      .rotate()
+      .resize({
+        width: 1600,
+        height: 1600,
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .flatten({ background: '#ffffff' })
+      .jpeg({ quality: 82, mozjpeg: true })
+      .toBuffer({ resolveWithObject: true });
 
-    try {
-      const info = await sharp(input)
-        .rotate()
-        .resize({
-          width: 1600,
-          height: 1600,
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .flatten({ background: '#ffffff' })
-        .jpeg({ quality: 82, mozjpeg: true })
-        .toFile(outputPath);
-
-      return { url: `/uploads/${filename}`, size: info.size };
-    } catch {
-      await unlink(outputPath).catch(() => {});
-      throw new AppError({
-        code: 'PHOTO_PROCESS_FAILED',
-        message: 'No pudimos procesar esta foto. Intenta con otra imagen.',
-        status: 422,
-      });
-    }
-  } catch (err) {
-    if (err instanceof AppError) throw err;
+    jpeg = data;
+  } catch {
     throw new AppError({
-      code: 'PHOTO_CONVERT_FAILED',
+      code: 'PHOTO_PROCESS_FAILED',
       message:
-        'No pudimos convertir esta foto. Prueba con otra o expórtala como JPG.',
+        'No pudimos procesar esta foto. Prueba con otra o expórtala como JPG.',
       status: 422,
     });
   } finally {
     await unlink(file.path).catch(() => {});
+  }
+
+  try {
+    return await saveBuffer(`${randomUUID()}.jpg`, jpeg, 'image/jpeg');
+  } catch (err) {
+    console.error('[uploads] error guardando foto', err);
+    throw storageError();
   }
 }
 
@@ -213,17 +213,28 @@ export function createUploadsRouter() {
       videoUploader.single('file')(req, res, (err) =>
         err ? handleMulterError(err, req, res, next) : next(),
       ),
-    (req, res) => {
+    async (req, res, next) => {
       if (!req.file) {
         return res.status(422).json({
           error: { code: 'FILE_REQUIRED', message: 'Adjunta un video' },
         });
       }
-      // Path relativo: funciona igual en localhost, LAN y túnel (proxy Vite).
-      const url = `/uploads/${req.file.filename}`;
-      return res.status(201).json({
-        data: { url, kind: 'video', size: req.file.size },
-      });
+
+      try {
+        const video = await saveFile(
+          req.file.filename,
+          req.file.path,
+          req.file.mimetype || 'video/mp4',
+        );
+        return res.status(201).json({
+          data: { url: video.url, kind: 'video', size: video.size },
+        });
+      } catch (err) {
+        console.error('[uploads] error guardando video', err);
+        return next(storageError());
+      } finally {
+        await unlink(req.file.path).catch(() => {});
+      }
     },
   );
 

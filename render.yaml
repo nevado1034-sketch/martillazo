@@ -53,3 +53,21 @@ services:
         value: soporte@pulgasya.com
       - key: UPLOADS_DIR
         value: /var/data/uploads
+      # Producción escalable y sin pérdida de fotos: usa object storage.
+      # 1) Crea un bucket en Cloudflare R2 (o S3/B2) con acceso público/CDN.
+      # 2) Cambia UPLOADS_DRIVER a "s3" y define las variables S3_*.
+      #    (El disco de abajo queda solo como respaldo de archivos locales.)
+      - key: UPLOADS_DRIVER
+        value: local
+      # - key: S3_ENDPOINT
+      #   sync: false
+      # - key: S3_REGION
+      #   value: auto
+      # - key: S3_BUCKET
+      #   sync: false
+      # - key: S3_ACCESS_KEY_ID
+      #   sync: false
+      # - key: S3_SECRET_ACCESS_KEY
+      #   sync: false
+      # - key: S3_PUBLIC_URL
+      #   sync: false

@@ -23,6 +23,7 @@ import { createPaymentsRouter } from './modules/payments/payments.routes.js';
 import { createGatewayStubRouter } from './modules/payments/gateway.stub.js';
 import { createDevRouter } from './modules/dev/dev.routes.js';
 import { createUploadsRouter, MEDIA_DIR } from './modules/uploads/uploads.routes.js';
+import { storageInfo } from './services/storage.js';
 import { ListingsController } from './modules/listings/listings.controller.js';
 import {
   createListingsRouter,
@@ -74,7 +75,12 @@ export function createApp({
   const escrowController = new EscrowController(escrowService);
 
   app.get('/health', (_req, res) =>
-    res.json({ ok: true, service: 'pulgasya-api', time: new Date().toISOString() }),
+    res.json({
+      ok: true,
+      service: 'pulgasya-api',
+      storage: storageInfo().driver,
+      time: new Date().toISOString(),
+    }),
   );
 
   app.use('/api/listings', createListingsRouter(listingsController));

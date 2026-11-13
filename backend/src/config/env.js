@@ -126,4 +126,28 @@ export const env = {
    * repo. En producción usar un disco persistente (p. ej. /var/data/uploads).
    */
   uploadsDir: process.env.UPLOADS_DIR ?? '',
+  /**
+   * Driver de almacenamiento de media:
+   *  - local → disco del servidor (UPLOADS_DIR). Una sola instancia.
+   *  - s3    → object storage compatible con S3 (R2 / S3 / B2). Escalable y
+   *            persistente: recomendado en producción.
+   */
+  uploadsDriver: (process.env.UPLOADS_DRIVER ?? 'local').toLowerCase(),
+  s3: {
+    /** R2: https://<accountid>.r2.cloudflarestorage.com · AWS: vacío */
+    endpoint: process.env.S3_ENDPOINT ?? '',
+    /** R2 usa "auto"; AWS p. ej. "us-east-1". */
+    region:
+      process.env.S3_REGION ??
+      (process.env.S3_ENDPOINT ? 'auto' : 'us-east-1'),
+    bucket: process.env.S3_BUCKET ?? '',
+    accessKeyId: process.env.S3_ACCESS_KEY_ID ?? '',
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? '',
+    /** URL pública/CDN del bucket, sin "/" final. */
+    publicUrl: (process.env.S3_PUBLIC_URL ?? '').replace(/\/+$/, ''),
+    /** Prefijo de las claves dentro del bucket. */
+    prefix: (process.env.S3_PREFIX ?? 'uploads').replace(/^\/+|\/+$/g, ''),
+    /** Algunos proveedores (MinIO, B2) requieren path-style. */
+    forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
+  },
 };
