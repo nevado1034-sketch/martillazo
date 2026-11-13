@@ -1,13 +1,17 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatPrice, formatRating, formatDistance } from '../../utils/format.js';
 
 export default function ListingCard({ listing, index = 0 }) {
+  const [imgError, setImgError] = useState(false);
   const isService = listing.type === 'servicio';
   const priceLabel = formatPrice(listing.price, {
     mode: isService ? listing.priceMode : undefined,
     currency: listing.currency,
   });
   const img = listing.images?.[0];
+  const rating = listing.seller?.rating;
+  const reviews = listing.seller?.reviews ?? 0;
 
   return (
     <Link
@@ -17,12 +21,13 @@ export default function ListingCard({ listing, index = 0 }) {
     >
       <article className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white/95 transition duration-300 hover:-translate-y-1 hover:border-[var(--brand-soft)] hover:shadow-[0_12px_28px_-16px_rgba(58,124,165,0.35)]">
         <div className="relative aspect-[4/3] overflow-hidden bg-[var(--mint-wash)]">
-          {img ? (
+          {img && !imgError ? (
             <img
               src={img}
-              alt=""
+              alt={listing.title}
               className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
               loading="lazy"
+              onError={() => setImgError(true)}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-sm text-[var(--ink-faint)]">
@@ -43,8 +48,8 @@ export default function ListingCard({ listing, index = 0 }) {
           <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[var(--ink-muted)]">
             <span>
               {listing.seller?.name}
-              {listing.seller?.rating != null && (
-                <> · ★ {formatRating(listing.seller.rating)}</>
+              {rating != null && reviews > 0 && (
+                <> · ★ {formatRating(rating)} ({reviews})</>
               )}
             </span>
             {listing.distanceKm != null && (

@@ -60,9 +60,20 @@ VITE_FIREBASE_APP_ID=<...>
 
 No pongas `VITE_ENABLE_SANDBOX_PAY=true`.
 
-## Uploads
+## Uploads (fotos de anuncios)
 
-API sirve `/uploads` desde disco (`backend/uploads/media`). En Render el disco es **efímero** salvo persistent disk — soft launch OK; luego object storage.
+En local las fotos se guardan en `backend/uploads/media` y se sirven en `/uploads`.
+
+**Producción (Render):** el disco local es **efímero**; cada redeploy/reinicio borra las fotos ya publicadas. Hay que montar un disco persistente:
+
+1. Render → servicio API → **Disks** → Add Disk.
+2. Name: `pulgasya-media` · Mount Path: `/var/data` · Size: `1 GB`.
+3. Environment → `UPLOADS_DIR=/var/data/uploads`.
+4. Redeploy.
+
+El `render.yaml` ya declara el disco y la variable, pero si el servicio se creó a mano hay que aplicarlo en el dashboard. Las fotos subidas antes del disco persistente no se pueden recuperar: hay que volver a subirlas.
+
+Las imágenes se normalizan al subirlas: se convierten a **JPEG**, se corrigen según la orientación EXIF, se reducen a máx. **1600 px** y los **HEIC/HEIF de iPhone** se convierten a JPEG para que carguen en cualquier celular.
 
 ## DNS (cPanel)
 

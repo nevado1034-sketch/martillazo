@@ -3,6 +3,7 @@ import { AuthProvider } from './store/AuthContext.jsx';
 import { MarketplaceProvider } from './store/MarketplaceContext.jsx';
 import { ToastProvider } from './components/ui/Toast.jsx';
 import CookieBanner from './components/layout/CookieBanner.jsx';
+import DocumentTitle from './components/layout/DocumentTitle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import HomePage from './pages/HomePage.jsx';
 import BrowsePage from './pages/BrowsePage.jsx';
@@ -21,6 +22,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import CookiePage from './pages/CookiePage.jsx';
 import MyOrdersPage from './pages/MyOrdersPage.jsx';
 import OrderDetailPage from './pages/OrderDetailPage.jsx';
+import NotFoundPage from './pages/NotFoundPage.jsx';
 
 export default function App() {
   return (
@@ -28,6 +30,7 @@ export default function App() {
       <AuthProvider>
         <MarketplaceProvider>
           <BrowserRouter>
+            <DocumentTitle />
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/buscar" element={<BrowsePage />} />
@@ -48,6 +51,7 @@ export default function App() {
               <Route path="/registro" element={<AuthEntryPage mode="register" />} />
               <Route path="/entrar" element={<AuthEntryPage mode="login" />} />
               <Route path="/login" element={<AuthEntryPage mode="login" />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
             <AuthModal />
             <CookieBanner />

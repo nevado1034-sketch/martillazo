@@ -81,50 +81,57 @@ export default function RelatedCarousel({
       </div>
       <div className="relacionados-track-wrap">
         <div className="relacionados-track" ref={trackRef}>
-          {listings.map((listing) => {
-            const img = listing.images?.[0];
-            const isService = listing.type === 'servicio';
-            return (
-              <Link
-                key={listing.id}
-                to={`/anuncio/${listing.id}`}
-                className="relacionados-card"
-              >
-                <div className="relacionados-card-img">
-                  {img ? (
-                    <img src={img} alt="" loading="lazy" />
-                  ) : (
-                    <div
-                      style={{
-                        display: 'flex',
-                        height: '100%',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--ink-faint)',
-                        fontSize: '0.8rem',
-                      }}
-                    >
-                      Sin foto
-                    </div>
-                  )}
-                </div>
-                <div className="relacionados-card-body">
-                  <p className="relacionados-card-price">
-                    {formatPrice(listing.price, {
-                      mode: isService ? listing.priceMode : undefined,
-                      currency: listing.currency,
-                    })}
-                  </p>
-                  <h3 className="relacionados-card-title">{listing.title}</h3>
-                  {listing.location && (
-                    <p className="relacionados-card-meta">{listing.location}</p>
-                  )}
-                </div>
-              </Link>
-            );
-          })}
+          {listings.map((listing) => (
+            <RelatedCard key={listing.id} listing={listing} />
+          ))}
         </div>
       </div>
     </section>
+  );
+}
+
+function RelatedCard({ listing }) {
+  const [imgError, setImgError] = useState(false);
+  const img = listing.images?.[0];
+  const isService = listing.type === 'servicio';
+
+  return (
+    <Link to={`/anuncio/${listing.id}`} className="relacionados-card">
+      <div className="relacionados-card-img">
+        {img && !imgError ? (
+          <img
+            src={img}
+            alt={listing.title}
+            loading="lazy"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div
+            style={{
+              display: 'flex',
+              height: '100%',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--ink-faint)',
+              fontSize: '0.8rem',
+            }}
+          >
+            Sin foto
+          </div>
+        )}
+      </div>
+      <div className="relacionados-card-body">
+        <p className="relacionados-card-price">
+          {formatPrice(listing.price, {
+            mode: isService ? listing.priceMode : undefined,
+            currency: listing.currency,
+          })}
+        </p>
+        <h3 className="relacionados-card-title">{listing.title}</h3>
+        {listing.location && (
+          <p className="relacionados-card-meta">{listing.location}</p>
+        )}
+      </div>
+    </Link>
   );
 }

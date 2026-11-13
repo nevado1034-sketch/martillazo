@@ -15,7 +15,8 @@ export function formatPrice(amount, { mode } = {}) {
 }
 
 export function formatRating(rating) {
-  return Number(rating).toFixed(1);
+  const n = Number(rating);
+  return Number.isFinite(n) ? n.toFixed(1) : '—';
 }
 
 export function formatDistance(km) {

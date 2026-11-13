@@ -39,7 +39,7 @@ export const HOME_BANNERS = [
       'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1600&q=80',
     title: 'Pago en custodia PulgasYa',
     subtitle: 'Tu dinero se libera al confirmar la entrega. Comisión transparente 10%.',
-    href: '/buscar',
+    href: '/ayuda#custodia',
     cta: 'Cómo funciona',
     tone: 'orange',
   },

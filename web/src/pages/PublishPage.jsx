@@ -241,7 +241,7 @@ export default function PublishPage() {
               className="text-sm font-medium text-[var(--brand)] hover:underline"
               onClick={() => setStep('tipo')}
             >
-              ← Cambiar a {tipo === 'servicio' ? 'producto' : 'servicio'}
+              ← Cambiar tipo de anuncio
             </button>
 
             <div>
@@ -330,8 +330,8 @@ export default function PublishPage() {
                     <input
                       id="pub-price"
                       type="number"
-                      min="1"
-                      step="1"
+                      min="0.01"
+                      step="0.01"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
                       required
@@ -365,8 +365,8 @@ export default function PublishPage() {
                     <input
                       id="pub-price"
                       type="number"
-                      min="1"
-                      step="1"
+                      min="0.01"
+                      step="0.01"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
                       required

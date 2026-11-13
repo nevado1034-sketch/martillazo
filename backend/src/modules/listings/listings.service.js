@@ -7,7 +7,7 @@ function mapSeller(row, { revealPhone = true } = {}) {
     name: row.seller_display_name || row.seller_name,
     phone: revealPhone ? row.seller_phone : null,
     phoneVisibility: row.seller_phone_visibility || 'public',
-    rating: row.seller_rating != null ? Number(row.seller_rating) : 5,
+    rating: row.seller_rating != null ? Number(row.seller_rating) : null,
     reviews: row.seller_reviews != null ? Number(row.seller_reviews) : 0,
     verified: row.seller_verified === true,
   };
@@ -60,8 +60,9 @@ const LISTING_SELECT = `
          COALESCE(u.display_name, u.full_name) AS seller_display_name,
          u.phone AS seller_phone,
          COALESCE(u.phone_visibility, 'public') AS seller_phone_visibility,
-         4.8::float AS seller_rating,
-         12::int AS seller_reviews,
+         -- Sin sistema de reseñas todavía: no inventar valoraciones.
+         NULL::float AS seller_rating,
+         0::int AS seller_reviews,
          (u.kyc_status = 'VERIFIED') AS seller_verified
   FROM pulgasya_listings l
   JOIN users u ON u.id = l.seller_id

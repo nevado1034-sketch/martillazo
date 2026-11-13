@@ -12,14 +12,17 @@ export const API_BASE = (
 export function mediaUrl(path) {
   if (!path) return '';
   if (/^https?:\/\//i.test(path)) {
-    // Reescribe host local de la API al origen actual (útil tras túnel / proxy)
+    // URLs antiguas guardadas con localhost:4000: en local usa el proxy de
+    // Vite; en producción mándalas al host real de la API.
     try {
       const u = new URL(path);
       if (
         (u.hostname === 'localhost' || u.hostname === '127.0.0.1') &&
         u.port === '4000'
       ) {
-        return `${window.location.origin}${u.pathname}`;
+        return API_BASE
+          ? `${API_BASE}${u.pathname}`
+          : `${window.location.origin}${u.pathname}`;
       }
     } catch {
       /* ignore */

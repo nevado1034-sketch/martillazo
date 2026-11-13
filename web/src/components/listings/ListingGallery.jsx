@@ -10,13 +10,19 @@ export default function ListingGallery({ images = [], alt = 'Foto del anuncio' }
   const [active, setActive] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [zoom, setZoom] = useState({ scale: 1, origin: '50% 50%' });
+  const [broken, setBroken] = useState(false);
   const containerRef = useRef(null);
 
   const urlsKey = urls.join('|');
   useEffect(() => {
     setActive(0);
+    setBroken(false);
     setZoom({ scale: 1, origin: '50% 50%' });
   }, [urlsKey]);
+
+  useEffect(() => {
+    setBroken(false);
+  }, [active]);
 
   useEffect(() => {
     if (!modalOpen) return undefined;
@@ -89,7 +95,14 @@ export default function ListingGallery({ images = [], alt = 'Foto del anuncio' }
                 }
               }}
             >
-              <img src={src} alt="" className="thumb" />
+              <img
+                src={src}
+                alt=""
+                className="thumb"
+                onError={(e) => {
+                  e.currentTarget.style.visibility = 'hidden';
+                }}
+              />
             </button>
           ))}
         </div>
@@ -110,14 +123,19 @@ export default function ListingGallery({ images = [], alt = 'Foto del anuncio' }
             }
           }}
         >
-          <img
-            src={current}
-            alt={alt}
-            style={{
-              transform: `scale(${zoom.scale})`,
-              transformOrigin: zoom.origin,
-            }}
-          />
+          {broken ? (
+            <div className="galeria-empty">Imagen no disponible</div>
+          ) : (
+            <img
+              src={current}
+              alt={alt}
+              style={{
+                transform: `scale(${zoom.scale})`,
+                transformOrigin: zoom.origin,
+              }}
+              onError={() => setBroken(true)}
+            />
+          )}
         </div>
       </div>
 
@@ -166,12 +184,19 @@ export default function ListingGallery({ images = [], alt = 'Foto del anuncio' }
             </button>
           </>
         )}
-        <img
-          className="modal-content"
-          src={current}
-          alt={alt}
-          onClick={(e) => e.stopPropagation()}
-        />
+        {broken ? (
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            Imagen no disponible
+          </div>
+        ) : (
+          <img
+            className="modal-content"
+            src={current}
+            alt={alt}
+            onClick={(e) => e.stopPropagation()}
+            onError={() => setBroken(true)}
+          />
+        )}
         {urls.length > 1 && (
           <p className="galeria-modal-count">
             {active + 1} / {urls.length}

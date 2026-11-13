@@ -121,4 +121,9 @@ export const env = {
   smtpPass: process.env.SMTP_PASS ?? '',
   smtpFrom: process.env.SMTP_FROM ?? 'PulgasYa <noreply@pulgasya.local>',
   supportEmail: process.env.SUPPORT_EMAIL ?? 'soporte@pulgasya.com',
+  /**
+   * Carpeta donde se guardan fotos/videos subidos. Vacío = disco local del
+   * repo. En producción usar un disco persistente (p. ej. /var/data/uploads).
+   */
+  uploadsDir: process.env.UPLOADS_DIR ?? '',
 };

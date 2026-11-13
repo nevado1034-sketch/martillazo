@@ -71,6 +71,10 @@ export default function ListingDetailPage() {
   }, [token, id, loadOffers, lastOffer]);
 
   useEffect(() => {
+    if (listing?.title) document.title = `${listing.title} — PulgasYa`;
+  }, [listing]);
+
+  useEffect(() => {
     if (!id) return undefined;
     let cancelled = false;
     setRelatedLoading(true);
@@ -182,13 +186,14 @@ export default function ListingDetailPage() {
 
             <div className="mt-6 rounded-2xl border border-[var(--line)] bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-[var(--ink-faint)]">
-                {isService ? 'Prestado por' : 'Vendido por'}
+                {isService ? 'Ofrecido por' : 'Vendido por'}
               </p>
               <div className="mt-2">
                 <p className="font-semibold text-[var(--ink)]">{listing.seller.name}</p>
                 <p className="text-sm text-[var(--ink-muted)]">
-                  ★ {formatRating(listing.seller.rating)} · {listing.seller.reviews}{' '}
-                  valoraciones
+                  {listing.seller.rating != null && (listing.seller.reviews ?? 0) > 0
+                    ? `★ ${formatRating(listing.seller.rating)} · ${listing.seller.reviews} valoraciones`
+                    : 'Nuevo en PulgasYa · Sin valoraciones'}
                   {listing.seller.verified ? ' · Verificado' : ''}
                 </p>
               </div>
@@ -237,61 +242,84 @@ export default function ListingDetailPage() {
               </p>
             </div>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              {!amSeller && listing.status === 'active' && (
-                <button
-                  type="button"
-                  disabled={buyBusy}
-                  onClick={async () => {
-                    if (!requireAuth('offer')) return;
-                    setBuyBusy(true);
-                    try {
-                      const order = await buyNow(token, listing.id);
-                      push('Pedido creado — paga en custodia PulgasYa');
-                      navigate(`/pedido/${order.id}`);
-                    } catch (err) {
-                      push(err.message || 'No se pudo crear el pedido');
-                    } finally {
-                      setBuyBusy(false);
-                    }
-                  }}
-                  className="flex-1 rounded-xl bg-[var(--cta-orange)] px-5 py-3.5 text-sm font-semibold text-white transition hover:brightness-95 disabled:opacity-50"
+            {amSeller ? (
+              <div className="mt-8 rounded-xl border border-[var(--line)] bg-white p-4 text-sm">
+                <p className="font-semibold text-[var(--ink)]">Este es tu anuncio</p>
+                <p className="mt-1 text-[var(--ink-muted)]">
+                  Las ofertas recibidas aparecen más abajo. También puedes gestionarlo
+                  desde Mis anuncios.
+                </p>
+                <Link
+                  to="/mis-anuncios"
+                  className="mt-3 inline-block font-semibold text-[var(--brand)] hover:underline"
                 >
-                  Comprar ahora (custodia)
-                </button>
-              )}
-              {waContact ? (
-                <a
-                  href={waContact}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex-1 rounded-xl bg-[#25D366] px-5 py-3.5 text-center text-sm font-semibold text-white transition hover:brightness-95 hover:scale-[1.01] active:scale-[0.99]"
-                >
-                  WhatsApp al vendedor
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() =>
-                    push('Este vendedor aún no tiene WhatsApp en su perfil.')
-                  }
-                  className="flex-1 rounded-xl bg-[#25D366]/70 px-5 py-3.5 text-sm font-semibold text-white"
-                >
-                  WhatsApp no disponible
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={openOffer}
-                className="flex-1 rounded-xl border border-[var(--primary-celeste)] px-5 py-3.5 text-sm font-semibold text-[var(--primary-celeste)] transition hover:bg-[var(--mint-wash)]"
-              >
-                Proponer precio
-              </button>
-            </div>
-            <p className="mt-2 text-xs text-[var(--ink-faint)]">
-              El pago va a custodia PulgasYa (no al vendedor). Comisión 10% al
-              liberar. Sandbox hasta conectar Culqi/Niubiz/MP.
-            </p>
+                  Ir a Mis anuncios →
+                </Link>
+              </div>
+            ) : listing.status === 'active' ? (
+              <>
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <button
+                    type="button"
+                    disabled={buyBusy}
+                    onClick={async () => {
+                      if (!requireAuth('offer')) return;
+                      setBuyBusy(true);
+                      try {
+                        const order = await buyNow(token, listing.id);
+                        push('Pedido creado — paga en custodia PulgasYa');
+                        navigate(`/pedido/${order.id}`);
+                      } catch (err) {
+                        push(err.message || 'No se pudo crear el pedido');
+                      } finally {
+                        setBuyBusy(false);
+                      }
+                    }}
+                    className="flex-1 rounded-xl bg-[var(--cta-orange)] px-5 py-3.5 text-sm font-semibold text-white transition hover:brightness-95 disabled:opacity-50"
+                  >
+                    Comprar ahora (custodia)
+                  </button>
+                  {waContact ? (
+                    <a
+                      href={waContact}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex-1 rounded-xl bg-[#25D366] px-5 py-3.5 text-center text-sm font-semibold text-white transition hover:brightness-95 hover:scale-[1.01] active:scale-[0.99]"
+                    >
+                      WhatsApp al vendedor
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        push('Este vendedor aún no tiene WhatsApp en su perfil.')
+                      }
+                      className="flex-1 rounded-xl bg-[#25D366]/70 px-5 py-3.5 text-sm font-semibold text-white"
+                    >
+                      WhatsApp no disponible
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={openOffer}
+                    className="flex-1 rounded-xl border border-[var(--primary-celeste)] px-5 py-3.5 text-sm font-semibold text-[var(--primary-celeste)] transition hover:bg-[var(--mint-wash)]"
+                  >
+                    Proponer precio
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-[var(--ink-faint)]">
+                  El pago queda retenido por PulgasYa y se libera al vendedor cuando
+                  confirmas la entrega. Comisión 10% al liberar.{' '}
+                  <Link to="/ayuda#custodia" className="underline">
+                    Cómo funciona
+                  </Link>
+                </p>
+              </>
+            ) : (
+              <p className="mt-6 rounded-xl bg-[var(--surface)] p-4 text-sm text-[var(--ink-muted)]">
+                Este anuncio ya no está activo.
+              </p>
+            )}
 
             {lastOffer && (
               <div className="mt-4 rounded-xl border border-[var(--mint-soft)] bg-[var(--mint-wash)] p-4 text-sm animate-rise">
@@ -364,7 +392,7 @@ export default function ListingDetailPage() {
         </div>
 
         <RelatedCarousel
-          title="Productos relacionados"
+          title={isService ? 'Servicios relacionados' : 'Productos relacionados'}
           listings={related}
           loading={relatedLoading}
         />

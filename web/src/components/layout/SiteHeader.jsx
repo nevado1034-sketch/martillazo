@@ -1,4 +1,4 @@
-import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../store/AuthContext.jsx';
 import AccountMenu, { AccountMenuMobile } from './AccountMenu.jsx';
@@ -6,6 +6,7 @@ import { greetingFirstName } from '../../utils/userDisplay.js';
 
 export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout, setAuthOpen } = useAuth();
   const [q, setQ] = useState(searchValue);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -15,18 +16,29 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
   const submit = (e) => {
     e.preventDefault();
     const query = q.trim();
+    setMenuOpen(false);
+    setAccountOpen(false);
     if (onSearchSubmit) {
       onSearchSubmit(query);
       return;
     }
     navigate(query ? `/buscar?q=${encodeURIComponent(query)}` : '/buscar');
-    setMenuOpen(false);
-    setAccountOpen(false);
   };
 
-  const linkClass = ({ isActive }) =>
+  // Mantiene el buscador alineado con la URL (atrás/adelante, limpiar filtros).
+  useEffect(() => {
+    setQ(searchValue);
+  }, [searchValue]);
+
+  const tipoActivo =
+    location.pathname === '/buscar'
+      ? new URLSearchParams(location.search).get('tipo')
+      : null;
+  const browseLinkClass = (tipo) =>
     `text-sm font-medium transition ${
-      isActive ? 'text-[var(--brand)]' : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
+      tipoActivo === tipo
+        ? 'text-[var(--brand)]'
+        : 'text-[var(--ink-muted)] hover:text-[var(--ink)]'
     }`;
 
   useEffect(() => {
@@ -76,12 +88,12 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
         </form>
 
         <nav className="ml-auto hidden items-center gap-4 lg:flex">
-          <NavLink to="/buscar?tipo=producto" className={linkClass}>
+          <Link to="/buscar?tipo=producto" className={browseLinkClass('producto')}>
             Productos
-          </NavLink>
-          <NavLink to="/buscar?tipo=servicio" className={linkClass}>
+          </Link>
+          <Link to="/buscar?tipo=servicio" className={browseLinkClass('servicio')}>
             Servicios
-          </NavLink>
+          </Link>
           {user ? (
             <AccountMenu user={user} onLogout={logout} />
           ) : (
@@ -163,12 +175,20 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
             />
           </form>
           <div className="flex flex-col gap-2">
-            <NavLink to="/buscar?tipo=producto" className={linkClass} onClick={() => setMenuOpen(false)}>
+            <Link
+              to="/buscar?tipo=producto"
+              className={browseLinkClass('producto')}
+              onClick={() => setMenuOpen(false)}
+            >
               Productos
-            </NavLink>
-            <NavLink to="/buscar?tipo=servicio" className={linkClass} onClick={() => setMenuOpen(false)}>
+            </Link>
+            <Link
+              to="/buscar?tipo=servicio"
+              className={browseLinkClass('servicio')}
+              onClick={() => setMenuOpen(false)}
+            >
               Servicios
-            </NavLink>
+            </Link>
             <NavLink
               to="/publicar"
               className="rounded-xl bg-[var(--cta-orange)] px-3.5 py-2.5 text-center text-sm font-semibold text-white"
