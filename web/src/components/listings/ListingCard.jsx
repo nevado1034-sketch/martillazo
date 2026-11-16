@@ -21,18 +21,19 @@ export default function ListingCard({ listing, index = 0 }) {
     >
       <article className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white/95 transition duration-300 hover:-translate-y-1 hover:border-[var(--brand-soft)] hover:shadow-[0_12px_28px_-16px_rgba(58,124,165,0.35)]">
         <div className="relative aspect-[4/3] overflow-hidden bg-[var(--mint-wash)]">
-          {img && !imgError ? (
+          {/* Placeholder debajo: si la imagen falla sin disparar onError
+              (p. ej. bloqueo ORB), se ve "Sin foto" en lugar de un hueco. */}
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-[var(--ink-faint)]">
+            Sin foto
+          </div>
+          {img && !imgError && (
             <img
               src={img}
-              alt={listing.title}
-              className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+              alt=""
+              className="relative h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
               loading="lazy"
               onError={() => setImgError(true)}
             />
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm text-[var(--ink-faint)]">
-              Sin foto
-            </div>
           )}
           <span className="absolute left-2 top-2 rounded-md bg-white/95 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--brand)]">
             {isService ? 'Servicio' : 'Producto'}

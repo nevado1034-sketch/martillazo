@@ -85,12 +85,25 @@
 }
 
 .relacionados-card-img {
+  position: relative;
   aspect-ratio: 1;
   background: var(--mint-wash);
   overflow: hidden;
 }
 
+/* Placeholder debajo de la foto: visible si la imagen falla. */
+.relacionados-card-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-faint);
+  font-size: 0.8rem;
+}
+
 .relacionados-card-img img {
+  position: relative;
   width: 100%;
   height: 100%;
   object-fit: cover;

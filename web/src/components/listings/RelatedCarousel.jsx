@@ -98,26 +98,14 @@ function RelatedCard({ listing }) {
   return (
     <Link to={`/anuncio/${listing.id}`} className="relacionados-card">
       <div className="relacionados-card-img">
-        {img && !imgError ? (
+        <div className="relacionados-card-empty">Sin foto</div>
+        {img && !imgError && (
           <img
             src={img}
-            alt={listing.title}
+            alt=""
             loading="lazy"
             onError={() => setImgError(true)}
           />
-        ) : (
-          <div
-            style={{
-              display: 'flex',
-              height: '100%',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--ink-faint)',
-              fontSize: '0.8rem',
-            }}
-          >
-            Sin foto
-          </div>
         )}
       </div>
       <div className="relacionados-card-body">
