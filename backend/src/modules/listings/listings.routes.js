@@ -10,6 +10,9 @@ export function createListingsRouter(controller) {
   router.get('/:id/related', controller.relatedForListing);
   router.get('/:id', optionalAuth, controller.get);
   router.post('/', authenticate, controller.create);
+  router.patch('/:id/status', authenticate, controller.setStatus);
+  router.patch('/:id', authenticate, controller.update);
+  router.delete('/:id', authenticate, controller.remove);
   router.get('/:id/offers', authenticate, controller.listOffers);
   router.post('/:id/offers', authenticate, controller.createOffer);
   router.patch(

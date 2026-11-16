@@ -17,6 +17,26 @@ export async function createListing(token, input) {
   return apiFetch('/api/listings', { token, method: 'POST', body: input });
 }
 
+export async function updateListing(token, id, input) {
+  return apiFetch(`/api/listings/${id}`, {
+    token,
+    method: 'PATCH',
+    body: input,
+  });
+}
+
+export async function updateListingStatus(token, id, status) {
+  return apiFetch(`/api/listings/${id}/status`, {
+    token,
+    method: 'PATCH',
+    body: { status },
+  });
+}
+
+export async function deleteListing(token, id) {
+  return apiFetch(`/api/listings/${id}`, { token, method: 'DELETE' });
+}
+
 export async function fetchMyListings(token) {
   return apiFetch('/api/me/listings', { token });
 }

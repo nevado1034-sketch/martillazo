@@ -246,15 +246,26 @@ export default function ListingDetailPage() {
               <div className="mt-8 rounded-xl border border-[var(--line)] bg-white p-4 text-sm">
                 <p className="font-semibold text-[var(--ink)]">Este es tu anuncio</p>
                 <p className="mt-1 text-[var(--ink-muted)]">
-                  Las ofertas recibidas aparecen más abajo. También puedes gestionarlo
-                  desde Mis anuncios.
+                  {listing.status === 'active'
+                    ? 'Puedes editar los datos y las fotos, pausarlo o marcarlo como vendido.'
+                    : listing.status === 'sold'
+                      ? 'Está marcado como vendido y no aparece en las búsquedas.'
+                      : 'Está pausado y no aparece en las búsquedas.'}
                 </p>
-                <Link
-                  to="/mis-anuncios"
-                  className="mt-3 inline-block font-semibold text-[var(--brand)] hover:underline"
-                >
-                  Ir a Mis anuncios →
-                </Link>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  <Link
+                    to={`/publicar?editar=${listing.id}`}
+                    className="rounded-xl bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    Editar anuncio
+                  </Link>
+                  <Link
+                    to="/mis-anuncios"
+                    className="inline-block self-center font-semibold text-[var(--brand)] hover:underline"
+                  >
+                    Ir a Mis anuncios →
+                  </Link>
+                </div>
               </div>
             ) : listing.status === 'active' ? (
               <>

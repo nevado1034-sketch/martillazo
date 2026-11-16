@@ -70,6 +70,44 @@ export class ListingsController {
     }
   };
 
+  update = async (req, res, next) => {
+    try {
+      const data = await this.service.update({
+        id: req.params.id,
+        sellerId: req.user.id,
+        input: req.body ?? {},
+      });
+      return res.json({ data });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  setStatus = async (req, res, next) => {
+    try {
+      const data = await this.service.setStatus({
+        id: req.params.id,
+        sellerId: req.user.id,
+        status: req.body?.status,
+      });
+      return res.json({ data });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  remove = async (req, res, next) => {
+    try {
+      const data = await this.service.remove({
+        id: req.params.id,
+        sellerId: req.user.id,
+      });
+      return res.json({ data });
+    } catch (err) {
+      next(err);
+    }
+  };
+
   listOffers = async (req, res, next) => {
     try {
       const data = await this.service.listOffersForListing({

@@ -6,7 +6,14 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { createListing, fetchListing, fetchListings } from '../api/listings.js';
+import {
+  createListing,
+  deleteListing as apiDeleteListing,
+  fetchListing,
+  fetchListings,
+  updateListing as apiUpdateListing,
+  updateListingStatus as apiUpdateListingStatus,
+} from '../api/listings.js';
 import {
   createOffer,
   fetchListingOffers,
@@ -70,6 +77,47 @@ export function MarketplaceProvider({ children }) {
     [token],
   );
 
+  const editListing = useCallback(
+    async (id, input) => {
+      if (!token) throw new Error('Debes iniciar sesión para editar');
+      const updated = normalizeListing(await apiUpdateListing(token, id, input));
+      setListings((prev) =>
+        prev.map((l) => (l.id === updated.id ? updated : l)),
+      );
+      return updated;
+    },
+    [token],
+  );
+
+  const changeListingStatus = useCallback(
+    async (id, status) => {
+      if (!token) throw new Error('Debes iniciar sesión para cambiar el estado');
+      const updated = normalizeListing(
+        await apiUpdateListingStatus(token, id, status),
+      );
+      setListings((prev) => {
+        if (status !== 'active') {
+          return prev.filter((l) => l.id !== updated.id);
+        }
+        return prev.some((l) => l.id === updated.id)
+          ? prev.map((l) => (l.id === updated.id ? updated : l))
+          : [updated, ...prev];
+      });
+      return updated;
+    },
+    [token],
+  );
+
+  const removeListing = useCallback(
+    async (id) => {
+      if (!token) throw new Error('Debes iniciar sesión para eliminar');
+      await apiDeleteListing(token, id);
+      setListings((prev) => prev.filter((l) => l.id !== id));
+      return { id };
+    },
+    [token],
+  );
+
   const makeOffer = useCallback(
     async ({ listingId, amount, message }) => {
       if (!token) throw new Error('Debes iniciar sesión para ofertar');
@@ -99,6 +147,9 @@ export function MarketplaceProvider({ children }) {
       refreshListings,
       getListing,
       publishListing,
+      editListing,
+      changeListingStatus,
+      removeListing,
       makeOffer,
       loadOffers,
       loadMyOffers,
@@ -110,6 +161,9 @@ export function MarketplaceProvider({ children }) {
       refreshListings,
       getListing,
       publishListing,
+      editListing,
+      changeListingStatus,
+      removeListing,
       makeOffer,
       loadOffers,
       loadMyOffers,

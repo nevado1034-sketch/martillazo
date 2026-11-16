@@ -144,8 +144,11 @@ export class ListingsService {
     return listing;
   }
 
-  async create({ sellerId, input }) {
-    const type = input.type === 'servicio' ? 'servicio' : 'producto';
+  /**
+   * Normaliza y valida los campos editables de un anuncio.
+   * `type` nunca se toma del cliente al editar: se conserva el original.
+   */
+  #normalizeInput(input, { type, fallbackImages = [] }) {
     const title = String(input.title ?? '').trim();
     const description = String(input.description ?? '').trim() || 'Sin descripción adicional.';
     const price = Number(input.price);
@@ -153,7 +156,7 @@ export class ListingsService {
     const location = String(input.location ?? '').trim();
     const images = Array.isArray(input.images)
       ? input.images.filter((u) => typeof u === 'string' && u.trim()).slice(0, 8)
-      : [];
+      : fallbackImages;
 
     if (!title || title.length > 120) {
       throw new AppError({
@@ -196,6 +199,26 @@ export class ListingsService {
       shipping = input.shipping === 'envio' ? 'envio' : 'persona';
     }
 
+    return {
+      title,
+      description,
+      price,
+      category,
+      location,
+      images,
+      priceMode,
+      condition,
+      negotiable,
+      shipping,
+      zone,
+      availableToday,
+    };
+  }
+
+  async create({ sellerId, input }) {
+    const type = input.type === 'servicio' ? 'servicio' : 'producto';
+    const data = this.#normalizeInput(input, { type });
+
     const { rows: [row] } = await this.pool.query(
       `INSERT INTO pulgasya_listings (
          seller_id, type, title, description, price, currency, price_mode,
@@ -208,22 +231,135 @@ export class ListingsService {
       [
         sellerId,
         type,
-        title,
-        description,
-        price,
-        priceMode,
-        category,
-        location,
-        condition,
-        negotiable,
-        shipping,
-        zone,
-        availableToday,
-        JSON.stringify(images.length ? images : []),
+        data.title,
+        data.description,
+        data.price,
+        data.priceMode,
+        data.category,
+        data.location,
+        data.condition,
+        data.negotiable,
+        data.shipping,
+        data.zone,
+        data.availableToday,
+        JSON.stringify(data.images),
       ],
     );
 
-    return this.getById(row.id);
+    return this.getById(row.id, { viewerId: sellerId });
+  }
+
+  /** Verifica que el anuncio exista y pertenezca al usuario. */
+  async #assertOwner(id, sellerId) {
+    const { rows: [row] } = await this.pool.query(
+      `SELECT id, seller_id, type, images, status
+       FROM pulgasya_listings WHERE id = $1`,
+      [id],
+    );
+    if (!row) {
+      throw new AppError({
+        code: 'LISTING_NOT_FOUND',
+        message: 'Anuncio no encontrado',
+        status: 404,
+      });
+    }
+    if (row.seller_id !== sellerId) {
+      throw new AppError({
+        code: 'FORBIDDEN',
+        message: 'Solo el dueño puede modificar este anuncio',
+        status: 403,
+      });
+    }
+    return row;
+  }
+
+  /**
+   * Edita los datos y las fotos de un anuncio propio.
+   * El tipo (producto/servicio) no se puede cambiar.
+   */
+  async update({ id, sellerId, input }) {
+    const existing = await this.#assertOwner(id, sellerId);
+    const fallbackImages = Array.isArray(existing.images) ? existing.images : [];
+    const data = this.#normalizeInput(input, {
+      type: existing.type,
+      fallbackImages,
+    });
+
+    await this.pool.query(
+      `UPDATE pulgasya_listings SET
+         title = $2,
+         description = $3,
+         price = $4,
+         price_mode = $5,
+         category = $6,
+         location = $7,
+         condition = $8,
+         negotiable = $9,
+         shipping = $10,
+         zone = $11,
+         available_today = $12,
+         images = $13::jsonb
+       WHERE id = $1 AND seller_id = $14`,
+      [
+        id,
+        data.title,
+        data.description,
+        data.price,
+        data.priceMode,
+        data.category,
+        data.location,
+        data.condition,
+        data.negotiable,
+        data.shipping,
+        data.zone,
+        data.availableToday,
+        JSON.stringify(data.images),
+        sellerId,
+      ],
+    );
+
+    return this.getById(id, { viewerId: sellerId });
+  }
+
+  /** Pausa (archived), reactiva (active) o marca vendido (sold). */
+  async setStatus({ id, sellerId, status }) {
+    if (!['active', 'sold', 'archived'].includes(status)) {
+      throw new AppError({
+        code: 'VALIDATION_ERROR',
+        message: 'Estado inválido (active, sold o archived)',
+        status: 422,
+      });
+    }
+    await this.#assertOwner(id, sellerId);
+    await this.pool.query(
+      `UPDATE pulgasya_listings SET status = $2
+       WHERE id = $1 AND seller_id = $3`,
+      [id, status, sellerId],
+    );
+    return this.getById(id, { viewerId: sellerId });
+  }
+
+  /** Elimina definitivamente un anuncio sin pedidos asociados. */
+  async remove({ id, sellerId }) {
+    await this.#assertOwner(id, sellerId);
+    try {
+      await this.pool.query(
+        `DELETE FROM pulgasya_listings WHERE id = $1 AND seller_id = $2`,
+        [id, sellerId],
+      );
+    } catch (err) {
+      // 23503 = violación de clave foránea: hay pedidos en custodia.
+      if (err.code === '23503') {
+        throw new AppError({
+          code: 'LISTING_HAS_ORDERS',
+          message:
+            'Este anuncio tiene pedidos en custodia y no se puede eliminar. Páusalo o márcalo como vendido.',
+          status: 409,
+        });
+      }
+      throw err;
+    }
+    return { id };
   }
 
   async listOffersForListing({ listingId, userId }) {

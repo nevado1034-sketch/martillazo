@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import SiteHeader from '../components/layout/SiteHeader.jsx';
 import SiteFooter from '../components/layout/SiteFooter.jsx';
@@ -7,6 +7,8 @@ import { useMarketplace } from '../store/MarketplaceContext.jsx';
 import { useAuth } from '../store/AuthContext.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
 import { uploadPhoto } from '../api/uploads.js';
+import { fetchListing } from '../api/listings.js';
+import { mediaUrl } from '../api/config.js';
 import {
   PRODUCT_CATEGORIES,
   SERVICE_CATEGORIES,
@@ -16,30 +18,37 @@ const STEPS = ['tipo', 'datos', 'listo'];
 
 export default function PublishPage() {
   const [params] = useSearchParams();
+  const editId = params.get('editar');
+  const isEdit = Boolean(editId);
   const initialTipo =
     params.get('tipo') === 'servicio' || params.get('tipo') === 'producto'
       ? params.get('tipo')
       : null;
 
-  const { publishListing } = useMarketplace();
+  const { publishListing, editListing } = useMarketplace();
   const { token, user, requireAuth } = useAuth();
   const { push } = useToast();
   const navigate = useNavigate();
 
-  const [step, setStep] = useState(initialTipo ? 'datos' : 'tipo');
+  const [step, setStep] = useState(
+    isEdit || initialTipo ? 'datos' : 'tipo',
+  );
   const [tipo, setTipo] = useState(initialTipo);
-  const [createdId, setCreatedId] = useState(null);
+  const [createdId, setCreatedId] = useState(isEdit ? editId : null);
+  const [loadingListing, setLoadingListing] = useState(isEdit);
+  const [loadError, setLoadError] = useState('');
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [location, setLocation] = useState('');
   const [category, setCategory] = useState('');
-  /** Hasta 8 fotos para la galería ML-style en la ficha */
-  const [photoItems, setPhotoItems] = useState([]); // { file, preview }
+  /** Hasta 8 fotos: { file } para nuevas y { url } para las ya guardadas. */
+  const [photoItems, setPhotoItems] = useState([]);
   const [photoError, setPhotoError] = useState('');
-  const photoFile = photoItems[photoItems.length - 1]?.file ?? null;
-  const photoPreview = photoItems[photoItems.length - 1]?.preview ?? '';
+  const lastNewPhoto = [...photoItems].reverse().find((item) => item.file);
+  const photoFile = lastNewPhoto?.file ?? null;
+  const photoPreview = lastNewPhoto?.preview ?? '';
   const [condition, setCondition] = useState('Buen estado');
   const [negotiable, setNegotiable] = useState(true);
   const [shipping, setShipping] = useState('persona');
@@ -47,6 +56,67 @@ export default function PublishPage() {
   const [zone, setZone] = useState('');
   const [availableToday, setAvailableToday] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // Cargar el anuncio a editar (solo el dueño).
+  useEffect(() => {
+    if (!editId) return undefined;
+    if (!token) {
+      setLoadingListing(false);
+      setLoadError('Inicia sesión para editar tu anuncio.');
+      return undefined;
+    }
+    let cancelled = false;
+    setLoadingListing(true);
+    setLoadError('');
+    fetchListing(editId, token)
+      .then((data) => {
+        if (cancelled) return;
+        if (user && data?.seller?.id && data.seller.id !== user.id) {
+          setLoadError('Este anuncio no es tuyo.');
+          return;
+        }
+        setTipo(data.type);
+        setTitle(data.title || '');
+        setDescription(
+          data.description === 'Sin descripción adicional.'
+            ? ''
+            : data.description || '',
+        );
+        setPrice(data.price != null ? String(data.price) : '');
+        setLocation(data.location || '');
+        setCategory(data.category || '');
+        setCondition(data.condition || 'Buen estado');
+        setNegotiable(data.negotiable !== false);
+        setShipping(data.shipping === 'envio' ? 'envio' : 'persona');
+        setPriceMode(
+          ['hora', 'desde', 'fijo'].includes(data.priceMode)
+            ? data.priceMode
+            : 'hora',
+        );
+        setZone(data.zone || '');
+        setAvailableToday(Boolean(data.availableToday));
+        setPhotoItems(
+          (data.images || []).slice(0, 8).map((url) => ({
+            url,
+            preview: mediaUrl(url),
+          })),
+        );
+        setCreatedId(data.id);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setLoadError(err.message || 'No se pudo cargar el anuncio.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingListing(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Solo al cambiar de anuncio o de sesión.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId, token]);
 
   const categories = tipo === 'servicio' ? SERVICE_CATEGORIES : PRODUCT_CATEGORIES;
   const stepIndex = STEPS.indexOf(step);
@@ -85,6 +155,13 @@ export default function PublishPage() {
     });
   };
 
+  /** «Quitar» del selector: borra solo la última foto nueva (o todas si no hay). */
+  const clearPickerPhoto = () => {
+    const lastNewIdx = photoItems.map((item) => Boolean(item.file)).lastIndexOf(true);
+    if (lastNewIdx >= 0) removePhotoAt(lastNewIdx);
+    else clearPhoto();
+  };
+
   const onPickPhoto = (file, errMsg) => {
     if (errMsg) {
       setPhotoError(errMsg);
@@ -113,19 +190,21 @@ export default function PublishPage() {
     setBusy(true);
     setPhotoError('');
     try {
-      let images = [];
-      if (photoItems.length) {
-        try {
-          for (const item of photoItems) {
+      const images = [];
+      try {
+        for (const item of photoItems) {
+          if (item.file) {
             const uploaded = await uploadPhoto(token, item.file);
             if (uploaded?.url) images.push(uploaded.url);
+          } else if (item.url) {
+            images.push(item.url);
           }
-        } catch (upErr) {
-          setPhotoError(upErr.message || 'No se pudo subir la foto. Revisa la conexión e inténtalo de nuevo.');
-          push(upErr.message || 'Error al subir la foto');
-          setBusy(false);
-          return;
         }
+      } catch (upErr) {
+        setPhotoError(upErr.message || 'No se pudo subir la foto. Revisa la conexión e inténtalo de nuevo.');
+        push(upErr.message || 'Error al subir la foto');
+        setBusy(false);
+        return;
       }
 
       const base = {
@@ -153,12 +232,19 @@ export default function PublishPage() {
               shipping,
             };
 
-      const created = await publishListing(payload);
-      setCreatedId(created.id);
-      setStep('listo');
-      push('Anuncio publicado');
+      if (isEdit) {
+        const updated = await editListing(editId, payload);
+        setCreatedId(updated.id);
+        setStep('listo');
+        push('Anuncio actualizado');
+      } else {
+        const created = await publishListing(payload);
+        setCreatedId(created.id);
+        setStep('listo');
+        push('Anuncio publicado');
+      }
     } catch (err) {
-      push(err.message || 'No se pudo publicar');
+      push(err.message || (isEdit ? 'No se pudo actualizar' : 'No se pudo publicar'));
     } finally {
       setBusy(false);
     }
@@ -170,33 +256,65 @@ export default function PublishPage() {
 
       <main className="mx-auto w-full max-w-xl flex-1 px-3 py-6 sm:px-4 sm:py-12">
         <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ink-faint)]">
-          Publicar · paso {Math.min(stepIndex + 1, 2)} de 2
+          {isEdit
+            ? 'Editar anuncio'
+            : `Publicar · paso ${Math.min(stepIndex + 1, 2)} de 2`}
         </p>
         <h1 className="mt-2 font-display text-3xl font-bold text-[var(--ink)]">
           {step === 'tipo' && '¿Qué quieres publicar?'}
           {step === 'datos' &&
-            (tipo === 'servicio' ? 'Ofrece tu servicio' : 'Vende tu producto')}
-          {step === 'listo' && '¡Listo!'}
+            (tipo === 'servicio'
+              ? isEdit
+                ? 'Edita tu servicio'
+                : 'Ofrece tu servicio'
+              : isEdit
+                ? 'Edita tu producto'
+                : 'Vende tu producto')}
+          {step === 'listo' && (isEdit ? '¡Anuncio actualizado!' : '¡Listo!')}
         </h1>
         <p className="mt-2 text-sm text-[var(--ink-muted)]">
           {step === 'tipo' &&
             'Elige pronto el tipo: productos y servicios tienen campos distintos. Requiere cuenta.'}
-          {step === 'datos' && 'Solo lo esencial. Sube una foto real del anuncio.'}
-          {step === 'listo' && 'Tu anuncio ya está en la base de datos de PulgasYa.'}
+          {step === 'datos' &&
+            (isEdit
+              ? 'Cambia lo que necesites. Las fotos que no quites se conservan.'
+              : 'Solo lo esencial. Sube una foto real del anuncio.')}
+          {step === 'listo' &&
+            (isEdit
+              ? 'Los cambios ya se ven en tu anuncio.'
+              : 'Tu anuncio ya está en la base de datos de PulgasYa.')}
         </p>
 
-        <div className="mt-4 flex gap-2">
-          {STEPS.slice(0, 2).map((s, i) => (
-            <span
-              key={s}
-              className={`h-1.5 flex-1 rounded-full transition ${
-                i <= stepIndex ? 'bg-[var(--brand)]' : 'bg-[var(--line)]'
-              }`}
-            />
-          ))}
-        </div>
+        {!isEdit && (
+          <div className="mt-4 flex gap-2">
+            {STEPS.slice(0, 2).map((s, i) => (
+              <span
+                key={s}
+                className={`h-1.5 flex-1 rounded-full transition ${
+                  i <= stepIndex ? 'bg-[var(--brand)]' : 'bg-[var(--line)]'
+                }`}
+              />
+            ))}
+          </div>
+        )}
 
-        {step === 'tipo' && (
+        {isEdit && loadingListing && (
+          <p className="mt-8 text-sm text-[var(--ink-muted)]">Cargando anuncio…</p>
+        )}
+
+        {isEdit && !loadingListing && loadError && (
+          <div className="mt-8 rounded-2xl border border-[var(--line)] bg-white p-6">
+            <p className="text-sm text-[var(--coral-deep)]">{loadError}</p>
+            <Link
+              to="/mis-anuncios"
+              className="mt-4 inline-block rounded-xl bg-[var(--brand)] px-4 py-2.5 text-sm font-semibold text-white"
+            >
+              Ir a Mis anuncios
+            </Link>
+          </div>
+        )}
+
+        {step === 'tipo' && !isEdit && (
           <div className="mt-8 grid gap-4">
             {!token && (
               <button
@@ -234,15 +352,17 @@ export default function PublishPage() {
           </div>
         )}
 
-        {step === 'datos' && (
+        {step === 'datos' && !loadingListing && !loadError && (
           <form onSubmit={submit} className="mt-8 space-y-4 animate-hero-in">
-            <button
-              type="button"
-              className="text-sm font-medium text-[var(--brand)] hover:underline"
-              onClick={() => setStep('tipo')}
-            >
-              ← Cambiar tipo de anuncio
-            </button>
+            {!isEdit && (
+              <button
+                type="button"
+                className="text-sm font-medium text-[var(--brand)] hover:underline"
+                onClick={() => setStep('tipo')}
+              >
+                ← Cambiar tipo de anuncio
+              </button>
+            )}
 
             <div>
               <p className="mb-2 text-sm font-medium text-[var(--ink)]">
@@ -251,7 +371,10 @@ export default function PublishPage() {
               {photoItems.length > 0 && (
                 <ul className="mb-3 flex flex-wrap gap-2">
                   {photoItems.map((item, i) => (
-                    <li key={item.preview} className="relative">
+                    <li
+                      key={`${i}-${item.url || item.preview}`}
+                      className="relative"
+                    >
                       <img
                         src={item.preview}
                         alt=""
@@ -274,7 +397,7 @@ export default function PublishPage() {
                 previewUrl={photoPreview}
                 error={photoError}
                 onPick={onPickPhoto}
-                onClear={clearPhoto}
+                onClear={clearPickerPhoto}
               />
             </div>
 
@@ -435,7 +558,13 @@ export default function PublishPage() {
               disabled={!canSubmit || busy}
               className="w-full rounded-xl bg-[var(--cta-orange)] py-3.5 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {busy ? 'Publicando…' : 'Publicar anuncio'}
+              {busy
+                ? isEdit
+                  ? 'Guardando…'
+                  : 'Publicando…'
+                : isEdit
+                  ? 'Guardar cambios'
+                  : 'Publicar anuncio'}
             </button>
           </form>
         )}
@@ -443,7 +572,9 @@ export default function PublishPage() {
         {step === 'listo' && (
           <div className="mt-10 space-y-4 animate-hero-in text-center">
             <p className="text-[var(--ink-muted)]">
-              Ya puedes ver la ficha y recibir propuestas de precio + WhatsApp.
+              {isEdit
+                ? 'Tus cambios ya están visibles en el anuncio.'
+                : 'Ya puedes ver la ficha y recibir propuestas de precio + WhatsApp.'}
             </p>
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
               <Link
@@ -454,10 +585,10 @@ export default function PublishPage() {
               </Link>
               <button
                 type="button"
-                onClick={() => navigate('/')}
+                onClick={() => navigate(isEdit ? '/mis-anuncios' : '/')}
                 className="rounded-xl border border-[var(--line)] px-5 py-3 text-sm font-semibold"
               >
-                Ir al inicio
+                {isEdit ? 'Volver a Mis anuncios' : 'Ir al inicio'}
               </button>
             </div>
           </div>
