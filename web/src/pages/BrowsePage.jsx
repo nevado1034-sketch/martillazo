@@ -32,7 +32,6 @@ export default function BrowsePage() {
   const [fetching, setFetching] = useState(false);
   const [related, setRelated] = useState([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const state = useMemo(() => {
     const tipo = params.get('tipo') || 'todos';
@@ -177,6 +176,15 @@ export default function BrowsePage() {
     });
   };
 
+  const clearFilterValues = () => {
+    update((p) => {
+      p.delete('condition');
+      p.delete('minPrice');
+      p.delete('maxPrice');
+      p.delete('date');
+    });
+  };
+
   const clearFilters = () => {
     update((p) => {
       p.delete('cat');
@@ -204,6 +212,9 @@ export default function BrowsePage() {
       (range.max ?? null) === priceState.max
     );
   });
+  const hasValueFilters = Boolean(
+    state.condition || state.minPrice !== '' || state.maxPrice !== '' || state.date,
+  );
 
   const activeFilters = [];
   if (state.category) {
@@ -248,11 +259,20 @@ export default function BrowsePage() {
       ? state.category.label
       : 'Explorar anuncios';
 
-  const headerSubtitle = activeSubcategory
-    ? activeSubcategory.label
-    : state.category
-      ? 'Filtros y subcategorías de esta categoría'
-      : 'Productos de segunda mano y servicios locales en soles';
+  const headerSubtitle = state.q
+    ? 'Ajusta tu búsqueda desde la categoría que te interese'
+    : activeSubcategory
+      ? activeSubcategory.label
+      : state.category
+        ? `${state.category.label} de segunda mano`
+        : 'Productos y servicios cerca de ti, siempre en soles';
+
+  const hasSubcategories = Boolean(state.category?.subcategories?.length);
+  const exploreIsCategory = !hasSubcategories;
+  const exploreItems = hasSubcategories ? state.category.subcategories : categories;
+  const exploreTitle = hasSubcategories
+    ? 'Elige un producto'
+    : 'Elige una categoría';
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -267,10 +287,43 @@ export default function BrowsePage() {
       />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
-        <h1 className="font-display text-3xl font-bold text-[var(--ink)]">
-          {headerTitle}
-        </h1>
-        <p className="mt-1 text-sm text-[var(--ink-muted)]">{headerSubtitle}</p>
+        <nav
+          aria-label="Ruta de navegación"
+          className="flex flex-wrap items-center gap-1.5 text-xs text-[var(--ink-muted)]"
+        >
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="hover:text-[var(--brand)] hover:underline"
+          >
+            Inicio
+          </button>
+          {state.q && !state.category && <span>/ Búsqueda</span>}
+          {state.category && (
+            <>
+              <span>/</span>
+              <span className="font-semibold text-[var(--ink)]">
+                {state.category.label}
+              </span>
+            </>
+          )}
+        </nav>
+
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-[var(--ink)]">
+              {headerTitle}
+            </h1>
+            <p className="mt-1 text-sm text-[var(--ink-muted)]">
+              {headerSubtitle}
+            </p>
+          </div>
+          <p className="text-sm text-[var(--ink-muted)]">
+            {fetching || loading
+              ? 'Buscando…'
+              : `${results.length} anuncio${results.length === 1 ? '' : 's'}`}
+          </p>
+        </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <TypeToggle
@@ -281,13 +334,8 @@ export default function BrowsePage() {
             }
             onChange={changeTipo}
           />
-          <p className="text-sm text-[var(--ink-muted)]">
-            {fetching || loading
-              ? 'Buscando…'
-              : `${results.length} anuncio${results.length === 1 ? '' : 's'}`}
-          </p>
           <label className="ml-auto flex items-center gap-2 text-xs text-[var(--ink-muted)]">
-            <span className="hidden sm:inline">Ordenar por</span>
+            <span>Ordenar</span>
             <select
               value={state.sort}
               onChange={(event) => changeSort(event.target.value)}
@@ -302,129 +350,111 @@ export default function BrowsePage() {
           </label>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <aside className="lg:sticky lg:top-24 lg:self-start">
-            <button
-              type="button"
-              onClick={() => setFiltersOpen((open) => !open)}
-              aria-expanded={filtersOpen}
-              className="flex w-full items-center justify-between rounded-xl border border-[var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[var(--ink)] lg:hidden"
-            >
-              <span>Filtros</span>
-              <span className="flex items-center gap-2 text-xs text-[var(--brand)]">
-                {activeFilters.length > 0 && (
-                  <span className="rounded-full bg-[var(--mint-soft)] px-2 py-0.5">
-                    {activeFilters.length}
-                  </span>
-                )}
-                {filtersOpen ? 'Ocultar' : 'Mostrar'}
-              </span>
-            </button>
+        <section className="mt-6">
+          <h2 className="text-[11px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">
+            {exploreTitle}
+          </h2>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {exploreItems.map((item) => {
+              const active = exploreIsCategory
+                ? state.cat === item.id
+                : state.sub === item.id;
+              const choose = () =>
+                exploreIsCategory
+                  ? changeCategory(item.id)
+                  : changeSubcategory(item.id);
 
-            <div
-              className={`${filtersOpen ? 'block' : 'hidden'} mt-3 lg:mt-0 lg:block`}
-            >
-              <FilterPanel
-                categories={categories}
-                category={state.category}
-                subcategory={state.sub}
-                condition={state.condition}
-                date={state.date}
-                minPrice={state.minPrice}
-                maxPrice={state.maxPrice}
-                isService={state.tipo === 'servicio'}
-                hasFilters={activeFilters.length > 0}
-                onSelectCategory={changeCategory}
-                onSelectSubcategory={changeSubcategory}
-                onCondition={changeCondition}
-                onDate={changeDate}
-                onPrice={changePrice}
-                onClear={clearFilters}
-              />
-            </div>
-          </aside>
-
-          <section className="min-w-0">
-            {/* Atajo de categorías en móvil */}
-            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2 lg:hidden">
-              <button
-                type="button"
-                onClick={() => changeCategory(null)}
-                className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
-                  !state.category
-                    ? 'border-[var(--brand)] bg-[var(--mint-soft)] text-[var(--brand-deep)]'
-                    : 'border-[var(--line)] bg-white text-[var(--ink-muted)]'
-                }`}
-              >
-                Todas
-              </button>
-              {categories.map((item) => (
+              return (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => changeCategory(item.id)}
-                  className={`shrink-0 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
-                    state.cat === item.id
+                  aria-pressed={active}
+                  onClick={choose}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    active
                       ? 'border-[var(--brand)] bg-[var(--mint-soft)] text-[var(--brand-deep)]'
-                      : 'border-[var(--line)] bg-white text-[var(--ink-muted)]'
+                      : 'border-[var(--line)] bg-white text-[var(--ink-muted)] hover:border-[var(--brand-soft)] hover:text-[var(--ink)]'
                   }`}
                 >
                   {item.label}
                 </button>
-              ))}
-            </div>
+              );
+            })}
+          </div>
+        </section>
 
-            {activeFilters.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                {activeFilters.map((filter) => (
-                  <button
-                    key={filter.key}
-                    type="button"
-                    onClick={filter.clear}
-                    className="group inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-soft)] bg-white px-3 py-1 text-xs font-semibold text-[var(--brand-deep)] transition hover:border-[var(--brand)]"
-                  >
-                    {filter.label}
-                    <span aria-hidden="true" className="text-sm leading-none opacity-60 group-hover:opacity-100">
-                      ×
-                    </span>
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="text-xs font-semibold text-[var(--ink-muted)] underline hover:text-[var(--ink)]"
-                >
-                  Limpiar todo
-                </button>
-              </div>
-            )}
-
-            {results.length === 0 && !loading && !fetching ? (
-              <div className="mt-12 rounded-2xl border border-dashed border-[var(--line)] bg-white/70 p-8 text-center">
-                <p className="text-[var(--ink-muted)]">
-                  No hay anuncios con esos filtros.
-                </p>
-                <button
-                  type="button"
-                  className="mt-3 font-semibold text-[var(--brand)] underline"
-                  onClick={() => navigate('/buscar')}
-                >
-                  Limpiar filtros
-                </button>
-              </div>
-            ) : (
-              <div
-                className={`mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 ${
-                  fetching ? 'opacity-60' : ''
-                }`}
-              >
-                {results.map((listing, i) => (
-                  <ListingCard key={listing.id} listing={listing} index={i} />
-                ))}
-              </div>
-            )}
+        {state.category && (
+          <section
+            aria-label="Filtros de anuncios"
+            className="mt-6 rounded-2xl border border-[var(--line)] bg-white p-3"
+          >
+            <FilterPanel
+              condition={state.condition}
+              date={state.date}
+              minPrice={state.minPrice}
+              maxPrice={state.maxPrice}
+              isService={state.tipo === 'servicio'}
+              hasFilters={hasValueFilters}
+              onCondition={changeCondition}
+              onDate={changeDate}
+              onPrice={changePrice}
+              onClear={clearFilterValues}
+            />
           </section>
-        </div>
+        )}
+
+        {activeFilters.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {activeFilters.map((filter) => (
+              <button
+                key={filter.key}
+                type="button"
+                onClick={filter.clear}
+                className="group inline-flex items-center gap-1.5 rounded-full border border-[var(--brand-soft)] bg-white px-3 py-1 text-xs font-semibold text-[var(--brand-deep)] transition hover:border-[var(--brand)]"
+              >
+                {filter.label}
+                <span
+                  aria-hidden="true"
+                  className="text-sm leading-none opacity-60 group-hover:opacity-100"
+                >
+                  ×
+                </span>
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="text-xs font-semibold text-[var(--ink-muted)] underline hover:text-[var(--ink)]"
+            >
+              Limpiar todo
+            </button>
+          </div>
+        )}
+
+        {results.length === 0 && !loading && !fetching ? (
+          <div className="mt-12 rounded-2xl border border-dashed border-[var(--line)] bg-white/70 p-8 text-center">
+            <p className="text-[var(--ink-muted)]">
+              No hay anuncios con esos filtros.
+            </p>
+            <button
+              type="button"
+              className="mt-3 font-semibold text-[var(--brand)] underline"
+              onClick={() => navigate('/buscar')}
+            >
+              Limpiar filtros
+            </button>
+          </div>
+        ) : (
+          <div
+            className={`mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 ${
+              fetching ? 'opacity-60' : ''
+            }`}
+          >
+            {results.map((listing, i) => (
+              <ListingCard key={listing.id} listing={listing} index={i} />
+            ))}
+          </div>
+        )}
 
         <RelatedCarousel
           title="También te puede interesar"
