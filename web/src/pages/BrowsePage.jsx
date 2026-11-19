@@ -314,7 +314,7 @@ export default function BrowsePage() {
             <p className="font-slogan mb-2 text-2xl font-extrabold leading-none tracking-tight text-[var(--brand-deep)] sm:text-3xl lg:text-4xl">
               ¿NO LO USAS?{' '}
               <span className="inline-block rounded-xl bg-[var(--coral-wash)] px-3 py-0.5 text-[var(--coral-deep)]">
-                ¡VÉNDELO!
+                ¡VÉNDELO EN PULGASYA!
               </span>
             </p>
             <h1 className="font-display text-3xl font-bold text-[var(--ink)]">
