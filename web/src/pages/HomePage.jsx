@@ -304,7 +304,7 @@ export default function HomePage() {
                         onClick={() => selectCategory(item.id)}
                         className={`rounded-xl border px-3 py-3 text-left transition ${
                           active
-                            ? 'border-[var(--brand)] bg-[var(--mint-soft)] text-[var(--brand-deep)]'
+                            ? 'border-[var(--brand)] bg-[var(--mint-soft)] text-[var(--ink)]'
                             : 'border-[var(--line)] bg-white text-[var(--ink)] hover:border-[var(--brand-soft)]'
                         }`}
                       >

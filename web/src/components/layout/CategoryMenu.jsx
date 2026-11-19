@@ -60,7 +60,7 @@ export function CategoryMenu() {
                   to={`/?productos=1&cat=${category.id}`}
                   className={`block text-sm font-bold transition hover:text-[var(--brand)] ${
                     activeCat === category.id
-                      ? 'text-[var(--brand)]'
+                      ? 'text-[var(--ink)] underline decoration-[var(--brand)] decoration-2 underline-offset-4'
                       : 'text-[var(--ink)]'
                   }`}
                 >
