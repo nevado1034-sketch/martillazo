@@ -3,10 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { PRODUCT_CATEGORIES } from '../../data/taxonomy.js';
 
 function activeCategoryFromLocation(location) {
-  if (location.pathname !== '/buscar' && location.pathname !== '/') return null;
-  const params = new URLSearchParams(location.search);
-  if (location.pathname === '/' && params.get('productos') !== '1') return null;
-  return params.get('cat');
+  if (location.pathname !== '/buscar') return null;
+  return new URLSearchParams(location.search).get('cat');
 }
 
 export function CategoryMenu() {
@@ -57,7 +55,7 @@ export function CategoryMenu() {
             {PRODUCT_CATEGORIES.map((category) => (
               <div key={category.id} className="min-w-0">
                 <Link
-                  to={`/?productos=1&cat=${category.id}`}
+                  to={`/buscar?tipo=producto&cat=${category.id}`}
                   className="block text-sm font-bold text-[var(--ink)] underline decoration-[var(--brand)] decoration-2 underline-offset-4 transition hover:text-[var(--brand)]"
                 >
                   {category.label}
@@ -66,7 +64,7 @@ export function CategoryMenu() {
                   {category.subcategories.map((subcategory) => (
                     <li key={subcategory.id}>
                       <Link
-                        to={`/?productos=1&cat=${category.id}&sub=${subcategory.id}`}
+                        to={`/buscar?tipo=producto&cat=${category.id}&sub=${subcategory.id}`}
                         className="block truncate text-xs text-[var(--ink-muted)] transition hover:text-[var(--brand)]"
                       >
                         {subcategory.label}
@@ -79,7 +77,7 @@ export function CategoryMenu() {
           </div>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[var(--line)] pt-3">
             <Link
-              to="/?productos=1"
+              to="/buscar?tipo=producto"
               className="text-sm font-semibold text-[var(--brand)] hover:underline"
             >
               Ver todos los productos →
@@ -116,7 +114,7 @@ export function MobileCategoryList({ onNavigate }) {
           </summary>
           <div className="px-3 pb-3">
             <Link
-              to={`/?productos=1&cat=${category.id}`}
+              to={`/buscar?tipo=producto&cat=${category.id}`}
               onClick={onNavigate}
               className="mb-2 block text-xs font-semibold text-[var(--brand)]"
             >
@@ -127,7 +125,7 @@ export function MobileCategoryList({ onNavigate }) {
                 {category.subcategories.map((subcategory) => (
                   <Link
                     key={subcategory.id}
-                    to={`/?productos=1&cat=${category.id}&sub=${subcategory.id}`}
+                    to={`/buscar?tipo=producto&cat=${category.id}&sub=${subcategory.id}`}
                     onClick={onNavigate}
                     className="rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[11px] font-medium text-[var(--ink-muted)]"
                   >

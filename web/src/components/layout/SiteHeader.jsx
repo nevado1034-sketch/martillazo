@@ -31,13 +31,10 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
     setQ(searchValue);
   }, [searchValue]);
 
-  const searchParams = new URLSearchParams(location.search);
   const tipoActivo =
     location.pathname === '/buscar'
-      ? searchParams.get('tipo')
-      : location.pathname === '/' && searchParams.get('productos') === '1'
-        ? 'producto'
-        : null;
+      ? new URLSearchParams(location.search).get('tipo')
+      : null;
   const browseLinkClass = (tipo) =>
     `text-sm font-medium transition ${
       tipoActivo === tipo
@@ -92,7 +89,7 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
         </form>
 
         <nav className="ml-auto hidden items-center gap-4 lg:flex">
-          <Link to="/?productos=1" className={browseLinkClass('producto')}>
+          <Link to="/buscar?tipo=producto" className={browseLinkClass('producto')}>
             Productos
           </Link>
           <CategoryMenu />
@@ -181,7 +178,7 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
           </form>
           <div className="flex flex-col gap-2">
             <Link
-              to="/?productos=1"
+              to="/buscar?tipo=producto"
               className={browseLinkClass('producto')}
               onClick={() => setMenuOpen(false)}
             >
