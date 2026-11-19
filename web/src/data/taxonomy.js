@@ -322,6 +322,27 @@ const TRANSMISSIONS = [
   opt('automatica', 'Automática'),
 ];
 
+const ELECTRIC_BRANDS = [
+  opt('yadea', 'Yadea'),
+  opt('niu', 'NIU'),
+  opt('segway', 'Segway'),
+  opt('xiaomi', 'Xiaomi'),
+  opt('bws', 'BWS'),
+  opt('yamaha', 'Yamaha'),
+  opt('honda', 'Honda'),
+  opt('suzuki', 'Suzuki'),
+  opt('byd', 'BYD'),
+  opt('italika', 'Italika'),
+  opt('otras', 'Otras'),
+];
+
+const ELECTRIC_AUTONOMY = [
+  opt('hasta-30', 'Hasta 30 km'),
+  opt('30-60', '30 – 60 km'),
+  opt('60-100', '60 – 100 km'),
+  opt('mas-100', 'Más de 100 km'),
+];
+
 /* ------------------------------------------------------------------ */
 /* Categorías de productos                                             */
 /* ------------------------------------------------------------------ */
@@ -527,6 +548,22 @@ export const PRODUCT_CATEGORIES = [
       { key: 'year', label: 'Año', options: VEHICLE_YEARS },
       { key: 'fuel', label: 'Combustible', options: FUEL_TYPES },
       { key: 'transmission', label: 'Transmisión', options: TRANSMISSIONS },
+    ],
+  },
+  {
+    id: 'movilidad-electrica',
+    label: 'Movilidad eléctrica',
+    subcategories: [
+      { id: 'bicicletas-electricas', label: 'Bicicletas eléctricas' },
+      { id: 'scooters-electricos', label: 'Scooters eléctricos' },
+      { id: 'motos-electricas', label: 'Motos eléctricas' },
+      { id: 'trimotos-electricos', label: 'Trimotos eléctricos' },
+      { id: 'baterias-accesorios', label: 'Baterías y accesorios' },
+      { id: 'otros-electricos', label: 'Otros vehículos eléctricos' },
+    ],
+    filters: [
+      { key: 'brand', label: 'Marca', options: ELECTRIC_BRANDS },
+      { key: 'autonomy', label: 'Autonomía', options: ELECTRIC_AUTONOMY },
     ],
   },
   {
