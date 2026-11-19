@@ -2,9 +2,10 @@ import { apiFetch } from './config.js';
 
 export async function fetchListings(params = {}) {
   const qs = new URLSearchParams();
-  if (params.tipo && params.tipo !== 'todos') qs.set('tipo', params.tipo);
-  if (params.q) qs.set('q', params.q);
-  if (params.cat) qs.set('cat', params.cat);
+  for (const [key, value] of Object.entries(params)) {
+    if (value == null || value === '' || value === 'todos') continue;
+    qs.set(key, String(value));
+  }
   const q = qs.toString();
   return apiFetch(`/api/listings${q ? `?${q}` : ''}`);
 }

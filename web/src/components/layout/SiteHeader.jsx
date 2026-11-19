@@ -2,6 +2,7 @@ import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../store/AuthContext.jsx';
 import AccountMenu, { AccountMenuMobile } from './AccountMenu.jsx';
+import { CategoryMenu, MobileCategoryList } from './CategoryMenu.jsx';
 import { greetingFirstName } from '../../utils/userDisplay.js';
 
 export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
@@ -91,6 +92,7 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
           <Link to="/buscar?tipo=producto" className={browseLinkClass('producto')}>
             Productos
           </Link>
+          <CategoryMenu />
           <Link to="/buscar?tipo=servicio" className={browseLinkClass('servicio')}>
             Servicios
           </Link>
@@ -189,6 +191,12 @@ export default function SiteHeader({ searchValue = '', onSearchSubmit }) {
             >
               Servicios
             </Link>
+            <div>
+              <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-[var(--ink-faint)]">
+                Categorías
+              </p>
+              <MobileCategoryList onNavigate={() => setMenuOpen(false)} />
+            </div>
             <NavLink
               to="/publicar"
               className="rounded-xl bg-[var(--cta-orange)] px-3.5 py-2.5 text-center text-sm font-semibold text-white"

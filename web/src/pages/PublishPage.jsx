@@ -10,9 +10,11 @@ import { uploadPhoto } from '../api/uploads.js';
 import { fetchListing } from '../api/listings.js';
 import { mediaUrl } from '../api/config.js';
 import {
-  PRODUCT_CATEGORIES,
-  SERVICE_CATEGORIES,
-} from '../data/mockListings.js';
+  CONDITIONS,
+  categoriesForType,
+  getCategoryDef,
+  getCondition,
+} from '../data/taxonomy.js';
 
 const STEPS = ['tipo', 'datos', 'listo'];
 
@@ -43,13 +45,15 @@ export default function PublishPage() {
   const [price, setPrice] = useState('');
   const [location, setLocation] = useState('');
   const [category, setCategory] = useState('');
+  const [subcategory, setSubcategory] = useState('');
+  const [attributes, setAttributes] = useState({});
   /** Hasta 8 fotos: { file } para nuevas y { url } para las ya guardadas. */
   const [photoItems, setPhotoItems] = useState([]);
   const [photoError, setPhotoError] = useState('');
   const lastNewPhoto = [...photoItems].reverse().find((item) => item.file);
   const photoFile = lastNewPhoto?.file ?? null;
   const photoPreview = lastNewPhoto?.preview ?? '';
-  const [condition, setCondition] = useState('Buen estado');
+  const [condition, setCondition] = useState('bueno');
   const [negotiable, setNegotiable] = useState(true);
   const [shipping, setShipping] = useState('persona');
   const [priceMode, setPriceMode] = useState('hora');
@@ -85,7 +89,15 @@ export default function PublishPage() {
         setPrice(data.price != null ? String(data.price) : '');
         setLocation(data.location || '');
         setCategory(data.category || '');
-        setCondition(data.condition || 'Buen estado');
+        setSubcategory(data.subcategory || '');
+        setAttributes(
+          data.attributes &&
+            typeof data.attributes === 'object' &&
+            !Array.isArray(data.attributes)
+            ? data.attributes
+            : {},
+        );
+        setCondition(getCondition(data.condition)?.value || 'bueno');
         setNegotiable(data.negotiable !== false);
         setShipping(data.shipping === 'envio' ? 'envio' : 'persona');
         setPriceMode(
@@ -118,14 +130,24 @@ export default function PublishPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editId, token]);
 
-  const categories = tipo === 'servicio' ? SERVICE_CATEGORIES : PRODUCT_CATEGORIES;
+  const categoryOptions = categoriesForType(
+    tipo === 'servicio' ? 'servicio' : 'producto',
+  );
+  const categoryDef = getCategoryDef(
+    category,
+    tipo === 'servicio' ? 'servicio' : 'producto',
+  );
+  const subcategories = categoryDef?.subcategories ?? [];
+  const needsSubcategory = subcategories.length > 0;
+  const filterGroups = categoryDef?.filters ?? [];
   const stepIndex = STEPS.indexOf(step);
 
   const canSubmit = useMemo(() => {
     if (!title.trim() || !price || !location.trim() || !category) return false;
+    if (needsSubcategory && !subcategory) return false;
     const n = Number(price);
     return Number.isFinite(n) && n > 0;
-  }, [title, price, location, category]);
+  }, [title, price, location, category, needsSubcategory, subcategory]);
 
   const ensureAuth = () => requireAuth('publish');
 
@@ -133,7 +155,24 @@ export default function PublishPage() {
     if (!ensureAuth()) return;
     setTipo(t);
     setCategory('');
+    setSubcategory('');
+    setAttributes({});
     setStep('datos');
+  };
+
+  const changeCategory = (value) => {
+    setCategory(value);
+    setSubcategory('');
+    setAttributes({});
+  };
+
+  const changeAttribute = (key, value) => {
+    setAttributes((prev) => {
+      const next = { ...prev };
+      if (!value) delete next[key];
+      else next[key] = value;
+      return next;
+    });
   };
 
   const clearPhoto = () => {
@@ -207,6 +246,9 @@ export default function PublishPage() {
         return;
       }
 
+      const cleanAttributes = Object.fromEntries(
+        Object.entries(attributes).filter(([, value]) => Boolean(value)),
+      );
       const base = {
         type: tipo,
         title: title.trim(),
@@ -227,6 +269,8 @@ export default function PublishPage() {
             }
           : {
               ...base,
+              subcategory: subcategory || undefined,
+              attributes: cleanAttributes,
               condition,
               negotiable,
               shipping,
@@ -421,18 +465,73 @@ export default function PublishPage() {
               <select
                 id="pub-cat"
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) => changeCategory(e.target.value)}
                 required
                 className="field-input"
               >
                 <option value="">Selecciona…</option>
-                {categories.map((c) => (
+                {categoryOptions.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.label}
                   </option>
                 ))}
               </select>
             </Field>
+
+            {subcategories.length > 0 && (
+              <Field label="Subcategoría" htmlFor="pub-sub">
+                <select
+                  id="pub-sub"
+                  value={subcategory}
+                  onChange={(e) => setSubcategory(e.target.value)}
+                  required
+                  className="field-input"
+                >
+                  <option value="">Selecciona…</option>
+                  {subcategories.map((sub) => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
+
+            {filterGroups.length > 0 && (
+              <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4">
+                <p className="text-sm font-semibold text-[var(--ink)]">
+                  Detalles de {categoryDef.label}
+                </p>
+                <p className="mt-1 text-xs text-[var(--ink-muted)]">
+                  Ayudan a que más personas encuentren tu anuncio con los filtros.
+                </p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {filterGroups.map((group) => (
+                    <Field
+                      key={group.key}
+                      label={group.label}
+                      htmlFor={`pub-attr-${group.key}`}
+                    >
+                      <select
+                        id={`pub-attr-${group.key}`}
+                        value={attributes[group.key] || ''}
+                        onChange={(e) =>
+                          changeAttribute(group.key, e.target.value)
+                        }
+                        className="field-input"
+                      >
+                        <option value="">Cualquiera</option>
+                        {group.options.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {tipo === 'servicio' ? (
               <>
@@ -503,9 +602,11 @@ export default function PublishPage() {
                       onChange={(e) => setCondition(e.target.value)}
                       className="field-input"
                     >
-                      <option>Como nuevo</option>
-                      <option>Buen estado</option>
-                      <option>Aceptable</option>
+                      {CONDITIONS.map((item) => (
+                        <option key={item.value} value={item.value}>
+                          {item.label} — {item.hint}
+                        </option>
+                      ))}
                     </select>
                   </Field>
                 </div>

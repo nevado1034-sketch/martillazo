@@ -9,7 +9,7 @@ Guía click-by-click en español (Agent Store): `docs/pulgasya-deploy-guide.md`.
 | `web/vercel.json` | SPA rewrites + build Vite |
 | `render.yaml` | Blueprint Render (API Node) |
 | `backend/Dockerfile` | Alternativa Docker en Render |
-| `scripts/migrate.sh` | `schema.sql` + migraciones `002`…`009` |
+| `scripts/migrate.sh` | `schema.sql` + migraciones `002`…`010` |
 
 ## Comandos Render (manual)
 

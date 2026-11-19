@@ -1,6 +1,85 @@
 import { AppError } from '../../utils/errors.js';
 import { rankRelated, tokenize } from './related.js';
 
+/**
+ * Valores canónicos de estado del producto (5 niveles).
+ * Se aceptan alias antiguos para no romper anuncios ya publicados.
+ */
+const CONDITION_ALIASES = {
+  nuevo: 'nuevo',
+  'con etiqueta': 'nuevo',
+  'como nuevo': 'como-nuevo',
+  'como-nuevo': 'como-nuevo',
+  'sin uso visible': 'como-nuevo',
+  bueno: 'bueno',
+  'buen estado': 'bueno',
+  'con detalles': 'bueno',
+  aceptable: 'lo-ha-dado-todo',
+  regular: 'lo-ha-dado-todo',
+  'lo ha dado todo': 'lo-ha-dado-todo',
+  'lo-ha-dado-todo': 'lo-ha-dado-todo',
+  'desgaste visible': 'lo-ha-dado-todo',
+  'no funciona': 'no-funciona',
+  'no-funciona': 'no-funciona',
+  'para reparar': 'no-funciona',
+};
+
+/** Claves de atributos que el catálogo puede filtrar (attributes JSONB). */
+const ATTRIBUTE_FILTER_KEYS = [
+  'brand',
+  'storage',
+  'bikeType',
+  'wheel',
+  'size',
+  'color',
+  'ageRange',
+  'topic',
+  'format',
+  'collection',
+  'era',
+  'sport',
+  'room',
+  'material',
+  'year',
+  'fuel',
+  'transmission',
+];
+
+const ATTRIBUTE_KEY_RE = /^[a-z][a-zA-Z0-9]{0,31}$/;
+
+function canonicalCondition(value) {
+  const key = String(value ?? '').trim().toLowerCase();
+  if (!key) return null;
+  return CONDITION_ALIASES[key] || null;
+}
+
+function normalizeSubcategory(value) {
+  const slug = String(value ?? '').trim().toLowerCase();
+  if (!slug) return '';
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ? slug.slice(0, 60) : '';
+}
+
+function sanitizeAttributes(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return {};
+  const out = {};
+  for (const [key, raw] of Object.entries(input)) {
+    if (!ATTRIBUTE_KEY_RE.test(key)) continue;
+    if (raw == null) continue;
+    if (
+      typeof raw !== 'string' &&
+      typeof raw !== 'number' &&
+      typeof raw !== 'boolean'
+    ) {
+      continue;
+    }
+    const value = String(raw).trim();
+    if (!value) continue;
+    out[key] = value.slice(0, 80);
+    if (Object.keys(out).length >= 20) break;
+  }
+  return out;
+}
+
 function mapSeller(row, { revealPhone = true } = {}) {
   return {
     id: row.seller_id,
@@ -24,6 +103,13 @@ function mapListing(row) {
     currency: row.currency || 'PEN',
     priceMode: row.price_mode || undefined,
     category: row.category,
+    subcategory: row.subcategory || undefined,
+    attributes:
+      row.attributes &&
+      typeof row.attributes === 'object' &&
+      !Array.isArray(row.attributes)
+        ? row.attributes
+        : {},
     location: row.location,
     condition: row.condition || undefined,
     negotiable: row.negotiable,
@@ -74,7 +160,19 @@ export class ListingsService {
     this.escrowService = null;
   }
 
-  async list({ tipo, q, cat, limit = 48 } = {}) {
+  async list({
+    tipo,
+    q,
+    cat,
+    sub,
+    condition,
+    minPrice,
+    maxPrice,
+    date,
+    sort,
+    limit = 48,
+    ...attributeFilters
+  } = {}) {
     const clauses = [`l.status = 'active'`];
     const params = [];
     let i = 1;
@@ -85,8 +183,48 @@ export class ListingsService {
     }
     if (cat) {
       clauses.push(`l.category = $${i++}`);
-      params.push(cat);
+      params.push(String(cat).trim());
     }
+    if (sub) {
+      clauses.push(`l.subcategory = $${i++}`);
+      params.push(String(sub).trim());
+    }
+    if (condition) {
+      const normalizedCondition = canonicalCondition(condition);
+      if (normalizedCondition) {
+        clauses.push(`l.condition = $${i++}`);
+        params.push(normalizedCondition);
+      }
+    }
+
+    const min = Number(minPrice);
+    const max = Number(maxPrice);
+    if (minPrice !== undefined && Number.isFinite(min) && min > 0) {
+      clauses.push(`l.price >= $${i++}`);
+      params.push(min);
+    }
+    if (maxPrice !== undefined && Number.isFinite(max) && max > 0) {
+      clauses.push(`l.price <= $${i++}`);
+      params.push(max);
+    }
+
+    const dateHours =
+      date === '24h' ? 24 : date === '7d' ? 24 * 7 : date === '30d' ? 24 * 30 : null;
+    if (dateHours) {
+      clauses.push(`l.created_at >= $${i++}`);
+      params.push(new Date(Date.now() - dateHours * 60 * 60 * 1000));
+    }
+
+    for (const key of ATTRIBUTE_FILTER_KEYS) {
+      const raw = attributeFilters[key];
+      if (raw == null) continue;
+      const value = String(raw).trim();
+      if (!value) continue;
+      clauses.push(`(l.attributes ->> $${i}::text) = $${i + 1}::text`);
+      params.push(key, value);
+      i += 2;
+    }
+
     if (q?.trim()) {
       clauses.push(
         `(l.title ILIKE $${i} OR l.description ILIKE $${i} OR l.location ILIKE $${i})`,
@@ -95,11 +233,18 @@ export class ListingsService {
       i += 1;
     }
 
+    const orderBy =
+      sort === 'price_asc'
+        ? 'l.price ASC, l.created_at DESC'
+        : sort === 'price_desc'
+          ? 'l.price DESC, l.created_at DESC'
+          : 'l.created_at DESC';
+
     params.push(Math.min(Number(limit) || 48, 100));
     const { rows } = await this.pool.query(
       `${LISTING_SELECT}
        WHERE ${clauses.join(' AND ')}
-       ORDER BY l.created_at DESC
+       ORDER BY ${orderBy}
        LIMIT $${i}`,
       params,
     );
@@ -153,6 +298,10 @@ export class ListingsService {
     const description = String(input.description ?? '').trim() || 'Sin descripción adicional.';
     const price = Number(input.price);
     const category = String(input.category ?? '').trim();
+    const subcategory =
+      type === 'producto' ? normalizeSubcategory(input.subcategory) : '';
+    const attributes =
+      type === 'producto' ? sanitizeAttributes(input.attributes) : {};
     const location = String(input.location ?? '').trim();
     const images = Array.isArray(input.images)
       ? input.images.filter((u) => typeof u === 'string' && u.trim()).slice(0, 8)
@@ -194,7 +343,7 @@ export class ListingsService {
       zone = String(input.zone ?? '').trim() || location;
       availableToday = Boolean(input.availableToday);
     } else {
-      condition = String(input.condition ?? 'Buen estado').trim();
+      condition = canonicalCondition(input.condition) || 'bueno';
       negotiable = input.negotiable !== false;
       shipping = input.shipping === 'envio' ? 'envio' : 'persona';
     }
@@ -204,6 +353,8 @@ export class ListingsService {
       description,
       price,
       category,
+      subcategory,
+      attributes,
       location,
       images,
       priceMode,
@@ -222,10 +373,10 @@ export class ListingsService {
     const { rows: [row] } = await this.pool.query(
       `INSERT INTO pulgasya_listings (
          seller_id, type, title, description, price, currency, price_mode,
-         category, location, condition, negotiable, shipping, zone,
-         available_today, images
+         category, subcategory, attributes, location, condition, negotiable,
+         shipping, zone, available_today, images
        ) VALUES (
-         $1,$2,$3,$4,$5,'PEN',$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb
+         $1,$2,$3,$4,$5,'PEN',$6,$7,$8,$9::jsonb,$10,$11,$12,$13,$14,$15,$16::jsonb
        )
        RETURNING id`,
       [
@@ -236,6 +387,8 @@ export class ListingsService {
         data.price,
         data.priceMode,
         data.category,
+        data.subcategory || null,
+        JSON.stringify(data.attributes),
         data.location,
         data.condition,
         data.negotiable,
@@ -292,14 +445,16 @@ export class ListingsService {
          price = $4,
          price_mode = $5,
          category = $6,
-         location = $7,
-         condition = $8,
-         negotiable = $9,
-         shipping = $10,
-         zone = $11,
-         available_today = $12,
-         images = $13::jsonb
-       WHERE id = $1 AND seller_id = $14`,
+         subcategory = $7,
+         attributes = $8::jsonb,
+         location = $9,
+         condition = $10,
+         negotiable = $11,
+         shipping = $12,
+         zone = $13,
+         available_today = $14,
+         images = $15::jsonb
+       WHERE id = $1 AND seller_id = $16`,
       [
         id,
         data.title,
@@ -307,6 +462,8 @@ export class ListingsService {
         data.price,
         data.priceMode,
         data.category,
+        data.subcategory || null,
+        JSON.stringify(data.attributes),
         data.location,
         data.condition,
         data.negotiable,

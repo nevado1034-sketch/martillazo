@@ -1,22 +1,10 @@
 /** Seed data for PulgasYa MVP — productos + servicios (PEN / S/). */
 
-export const PRODUCT_CATEGORIES = [
-  { id: 'tech', label: 'Tech' },
-  { id: 'moda', label: 'Moda' },
-  { id: 'hogar', label: 'Hogar' },
-  { id: 'deporte', label: 'Deporte' },
-  { id: 'infantil', label: 'Infantil' },
-  { id: 'otros', label: 'Otros' },
-];
-
-export const SERVICE_CATEGORIES = [
-  { id: 'limpieza', label: 'Limpieza' },
-  { id: 'clases', label: 'Clases' },
-  { id: 'reparaciones', label: 'Reparaciones' },
-  { id: 'mudanzas', label: 'Mudanzas' },
-  { id: 'belleza', label: 'Belleza' },
-  { id: 'otros-servicios', label: 'Otros' },
-];
+// Fuente única: web/src/data/taxonomy.js
+export {
+  PRODUCT_CATEGORIES,
+  SERVICE_CATEGORIES,
+} from './taxonomy.js';
 
 export const MOCK_LISTINGS = [
   {

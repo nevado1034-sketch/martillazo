@@ -21,6 +21,12 @@ import ListingGallery from '../components/listings/ListingGallery.jsx';
 import RelatedCarousel from '../components/listings/RelatedCarousel.jsx';
 import { fetchRelatedForListing } from '../api/listings.js';
 import { mediaUrl } from '../api/config.js';
+import {
+  conditionLabel,
+  getAttributeEntries,
+  getCategoryLabel,
+  getSubcategoryLabel,
+} from '../data/taxonomy.js';
 
 export default function ListingDetailPage() {
   const { id } = useParams();
@@ -129,6 +135,16 @@ export default function ListingDetailPage() {
   const amSeller = Boolean(
     isSeller || (user?.id && user.id === listing.seller?.id),
   );
+  const categoryLabel = getCategoryLabel(
+    listing.category,
+    isService ? 'servicio' : 'producto',
+  );
+  const subcategoryLabel = getSubcategoryLabel(
+    listing.category,
+    listing.subcategory,
+    isService ? 'servicio' : 'producto',
+  );
+  const attributeEntries = getAttributeEntries(listing);
   const priceLabel = formatPrice(listing.price, {
     mode: isService ? listing.priceMode : undefined,
     currency: listing.currency,
@@ -217,14 +233,16 @@ export default function ListingDetailPage() {
                 </div>
                 <div className="rounded-xl bg-[var(--surface)] p-3">
                   <dt className="text-[var(--ink-faint)]">Categoría</dt>
-                  <dd className="mt-0.5 font-semibold capitalize">{listing.category}</dd>
+                  <dd className="mt-0.5 font-semibold">{categoryLabel || 'Otros'}</dd>
                 </div>
               </dl>
             ) : (
               <dl className="mt-6 grid grid-cols-2 gap-3 text-sm">
                 <div className="rounded-xl bg-[var(--surface)] p-3">
                   <dt className="text-[var(--ink-faint)]">Estado</dt>
-                  <dd className="mt-0.5 font-semibold">{listing.condition}</dd>
+                  <dd className="mt-0.5 font-semibold">
+                    {conditionLabel(listing.condition) || 'No indicado'}
+                  </dd>
                 </div>
                 <div className="rounded-xl bg-[var(--surface)] p-3">
                   <dt className="text-[var(--ink-faint)]">Entrega</dt>
@@ -232,7 +250,34 @@ export default function ListingDetailPage() {
                     {listing.shipping === 'envio' ? 'Envío / delivery' : 'Sólo en persona'}
                   </dd>
                 </div>
+                <div className="rounded-xl bg-[var(--surface)] p-3">
+                  <dt className="text-[var(--ink-faint)]">Categoría</dt>
+                  <dd className="mt-0.5 font-semibold">{categoryLabel || 'Otros'}</dd>
+                </div>
+                {subcategoryLabel && (
+                  <div className="rounded-xl bg-[var(--surface)] p-3">
+                    <dt className="text-[var(--ink-faint)]">Subcategoría</dt>
+                    <dd className="mt-0.5 font-semibold">{subcategoryLabel}</dd>
+                  </div>
+                )}
               </dl>
+            )}
+
+            {!isService && attributeEntries.length > 0 && (
+              <div className="mt-4">
+                <h2 className="font-display text-lg font-bold">Detalles</h2>
+                <dl className="mt-2 grid grid-cols-2 gap-3 text-sm">
+                  {attributeEntries.map((entry) => (
+                    <div
+                      key={entry.key}
+                      className="rounded-xl bg-[var(--surface)] p-3"
+                    >
+                      <dt className="text-[var(--ink-faint)]">{entry.label}</dt>
+                      <dd className="mt-0.5 font-semibold">{entry.valueLabel}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
             )}
 
             <div className="mt-6">

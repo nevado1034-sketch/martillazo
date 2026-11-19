@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { formatPrice, formatRating, formatDistance } from '../../utils/format.js';
+import { conditionLabel } from '../../data/taxonomy.js';
 
 export default function ListingCard({ listing, index = 0 }) {
   const [imgError, setImgError] = useState(false);
@@ -12,6 +13,7 @@ export default function ListingCard({ listing, index = 0 }) {
   const img = listing.images?.[0];
   const rating = listing.seller?.rating;
   const reviews = listing.seller?.reviews ?? 0;
+  const condition = isService ? '' : conditionLabel(listing.condition);
 
   return (
     <Link
@@ -55,6 +57,11 @@ export default function ListingCard({ listing, index = 0 }) {
             </span>
             {listing.distanceKm != null && (
               <span>· {formatDistance(listing.distanceKm)}</span>
+            )}
+            {condition && (
+              <span className="rounded bg-[var(--mint-wash)] px-1.5 py-0.5 font-semibold text-[var(--brand-deep)]">
+                {condition}
+              </span>
             )}
           </p>
           {isService && listing.availableToday && (

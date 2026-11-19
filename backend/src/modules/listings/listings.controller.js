@@ -6,9 +6,7 @@ export class ListingsController {
   list = async (req, res, next) => {
     try {
       const data = await this.service.list({
-        tipo: req.query.tipo,
-        q: req.query.q,
-        cat: req.query.cat,
+        ...req.query,
         limit: req.query.limit,
       });
       return res.json({ data });
