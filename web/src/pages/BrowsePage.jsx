@@ -316,8 +316,8 @@ export default function BrowsePage() {
                 aria-hidden="true"
                 className="h-1.5 w-1.5 rounded-full bg-[var(--brand)]"
               />
-              <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--brand-deep)]">
-                NO LO USAS VENDE YA EN PULGASYA
+              <span className="font-display text-xs font-bold tracking-[0.06em] text-[var(--brand-deep)] sm:text-sm">
+                ¿NO LO USAS? ¡VENDE YA EN PULGASYA!
               </span>
             </div>
             <h1 className="font-display text-3xl font-bold text-[var(--ink)]">
