@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import SiteHeader from '../components/layout/SiteHeader.jsx';
 import SiteFooter from '../components/layout/SiteFooter.jsx';
@@ -47,6 +47,39 @@ export default function HomePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </section>
+
+        <section className="py-12 sm:py-14">
+          <div className="mx-auto grid max-w-6xl gap-5 px-4 md:grid-cols-2">
+            <Link
+              to="/publicar?tipo=producto"
+              className="group rounded-2xl border border-[var(--line)] bg-[var(--mint-wash)] p-7 transition hover:border-[var(--brand-soft)] hover:shadow-md sm:p-8"
+            >
+              <h2 className="font-display text-2xl font-bold text-[var(--ink)]">
+                Vender un producto
+              </h2>
+              <p className="mt-2 text-sm text-[var(--ink-muted)]">
+                Publica en pocos pasos: foto, precio en S/ y listo.
+              </p>
+              <span className="mt-4 inline-block text-sm font-semibold text-[var(--brand)] transition group-hover:translate-x-1">
+                Empezar →
+              </span>
+            </Link>
+            <Link
+              to="/publicar?tipo=servicio"
+              className="group rounded-2xl border border-[var(--line)] bg-[var(--coral-wash)] p-7 transition hover:border-[var(--coral)]/40 hover:shadow-md sm:p-8"
+            >
+              <h2 className="font-display text-2xl font-bold text-[var(--ink)]">
+                Ofrecer un servicio
+              </h2>
+              <p className="mt-2 text-sm text-[var(--ink-muted)]">
+                Tarifa S/ por hora, desde o fijo — contactan por WhatsApp.
+              </p>
+              <span className="mt-4 inline-block text-sm font-semibold text-[var(--coral-deep)] transition group-hover:translate-x-1">
+                Empezar →
+              </span>
+            </Link>
           </div>
         </section>
       </main>
