@@ -71,6 +71,10 @@
     font-family: 'Syne', 'Figtree', sans-serif;
   }
 
+  .font-slogan {
+    font-family: 'Baloo 2', 'Figtree', sans-serif;
+  }
+
   .btn-primary {
     @apply rounded-xl bg-[var(--primary-celeste)] text-sm font-semibold text-white transition hover:bg-[var(--primary-hover)];
   }

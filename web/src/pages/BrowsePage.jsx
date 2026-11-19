@@ -311,15 +311,12 @@ export default function BrowsePage() {
 
         <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[var(--brand-soft)] bg-[var(--mint-soft)] px-3 py-1">
-              <span
-                aria-hidden="true"
-                className="h-1.5 w-1.5 rounded-full bg-[var(--brand)]"
-              />
-              <span className="font-display text-xs font-bold tracking-[0.06em] text-[var(--brand-deep)] sm:text-sm">
-                ¿NO LO USAS? ¡VENDE YA EN PULGASYA!
+            <p className="font-slogan mb-2 text-2xl font-extrabold leading-none tracking-tight text-[var(--brand-deep)] sm:text-3xl lg:text-4xl">
+              ¿NO LO USAS?{' '}
+              <span className="inline-block rounded-xl bg-[var(--coral-wash)] px-3 py-0.5 text-[var(--coral-deep)]">
+                ¡VÉNDELO!
               </span>
-            </div>
+            </p>
             <h1 className="font-display text-3xl font-bold text-[var(--ink)]">
               {headerTitle}
             </h1>
