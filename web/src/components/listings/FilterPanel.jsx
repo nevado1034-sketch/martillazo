@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import {
   CONDITIONS,
   DATE_RANGES,
   PRICE_RANGES,
+  conditionLabel,
+  getDateRange,
 } from '../../data/taxonomy.js';
 
 function SectionTitle({ children }) {
@@ -29,11 +32,52 @@ function Chip({ active, onClick, children, className = '' }) {
   );
 }
 
+function FilterSection({ title, summary, active = false, children }) {
+  const [open, setOpen] = useState(active);
+
+  return (
+    <div className="border-t border-[var(--line)] first:border-t-0">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="flex w-full items-center justify-between gap-2 py-3 text-left"
+      >
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="text-xs font-semibold text-[var(--ink)]">
+            {title}
+          </span>
+          {active && (
+            <span
+              aria-label="Filtro activo"
+              className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--brand)]"
+            />
+          )}
+        </span>
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-[11px] font-medium text-[var(--ink-faint)]">
+            {summary}
+          </span>
+          <span
+            aria-hidden="true"
+            className={`text-[10px] text-[var(--ink-faint)] transition-transform ${
+              open ? 'rotate-180' : ''
+            }`}
+          >
+            ▾
+          </span>
+        </span>
+      </button>
+
+      {open && <div className="pb-4">{children}</div>}
+    </div>
+  );
+}
+
 export default function FilterPanel({
   categories,
   category,
   subcategory,
-  attributes = {},
   condition = '',
   date = '',
   minPrice = '',
@@ -42,7 +86,6 @@ export default function FilterPanel({
   hasFilters = false,
   onSelectCategory,
   onSelectSubcategory,
-  onAttribute,
   onCondition,
   onDate,
   onPrice,
@@ -53,6 +96,15 @@ export default function FilterPanel({
     const max = maxPrice === '' ? null : Number(maxPrice);
     return (range.min || 0) === (min || 0) && (range.max ?? null) === max;
   });
+
+  const priceSummary = activePriceRange
+    ? activePriceRange.label
+    : minPrice !== '' || maxPrice !== ''
+      ? `S/ ${minPrice || 0} – ${maxPrice ? `S/ ${maxPrice}` : 'más'}`
+      : 'Cualquiera';
+
+  const conditionSummary = condition ? conditionLabel(condition) : 'Cualquiera';
+  const dateSummary = date ? getDateRange(date)?.label || date : 'Todos';
 
   const pickPriceRange = (range) => {
     if (activePriceRange?.id === range.id) {
@@ -159,58 +211,26 @@ export default function FilterPanel({
         </ul>
       </div>
 
-      {/* Filtros */}
-      <div className="rounded-2xl border border-[var(--line)] bg-white p-4">
-        <div className="flex items-center justify-between gap-2">
+      {/* Filtros: precio, estado y fecha (cada uno desplegable) */}
+      <div className="rounded-2xl border border-[var(--line)] bg-white px-4 py-1">
+        <div className="flex items-center justify-between gap-2 border-b border-[var(--line)] py-3">
           <SectionTitle>Filtros</SectionTitle>
-          {category && (
-            <span className="truncate text-[11px] font-medium text-[var(--ink-faint)]">
-              {category.label}
-            </span>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={onClear}
+              className="text-[11px] font-semibold text-[var(--brand)] hover:underline"
+            >
+              Limpiar
+            </button>
           )}
         </div>
 
-        {/* Filtros propios de la categoría */}
-        {category?.filters?.length > 0 && (
-          <div className="mt-4 space-y-4">
-            {category.filters.map((group) => (
-              <div key={group.key}>
-                <p className="mb-2 text-xs font-semibold text-[var(--ink)]">
-                  {group.label}
-                </p>
-                <div
-                  className={`flex flex-wrap gap-1.5 ${
-                    group.options.length > 10
-                      ? 'max-h-44 overflow-y-auto pr-1'
-                      : ''
-                  }`}
-                >
-                  {group.options.map((option) => (
-                    <Chip
-                      key={option.value}
-                      active={attributes[group.key] === option.value}
-                      onClick={() =>
-                        onAttribute(
-                          group.key,
-                          attributes[group.key] === option.value
-                            ? ''
-                            : option.value,
-                        )
-                      }
-                    >
-                      {option.label}
-                    </Chip>
-                  ))}
-                </div>
-              </div>
-            ))}
-            <div className="border-t border-[var(--line)] pt-3" />
-          </div>
-        )}
-
-        {/* Precio */}
-        <div className={category?.filters?.length ? '' : 'mt-4'}>
-          <p className="mb-2 text-xs font-semibold text-[var(--ink)]">Precio</p>
+        <FilterSection
+          title="Precio"
+          summary={priceSummary}
+          active={Boolean(minPrice !== '' || maxPrice !== '')}
+        >
           <div className="flex items-center gap-2">
             <label className="relative min-w-0 flex-1">
               <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-[var(--ink-faint)]">
@@ -261,12 +281,14 @@ export default function FilterPanel({
               </Chip>
             ))}
           </div>
-        </div>
+        </FilterSection>
 
-        {/* Estado */}
         {!isService && (
-          <div className="mt-4 border-t border-[var(--line)] pt-3">
-            <p className="mb-2 text-xs font-semibold text-[var(--ink)]">Estado</p>
+          <FilterSection
+            title="Estado"
+            summary={conditionSummary}
+            active={Boolean(condition)}
+          >
             <div className="space-y-1">
               {CONDITIONS.map((item) => {
                 const active = condition === item.value;
@@ -311,30 +333,26 @@ export default function FilterPanel({
                 );
               })}
             </div>
-          </div>
+          </FilterSection>
         )}
 
-        {/* Fecha */}
-        <div className="mt-4 border-t border-[var(--line)] pt-3">
-          <p className="mb-2 text-xs font-semibold text-[var(--ink)]">
-            Fecha de publicación
-          </p>
+        <FilterSection
+          title="Fecha de publicación"
+          summary={dateSummary}
+          active={Boolean(date)}
+        >
           <div className="flex flex-wrap gap-1.5">
             {DATE_RANGES.map((item) => (
               <Chip
                 key={item.value}
-                active={
-                  (date || 'all') === item.value
-                }
-                onClick={() =>
-                  onDate(item.value === 'all' ? '' : item.value)
-                }
+                active={(date || 'all') === item.value}
+                onClick={() => onDate(item.value === 'all' ? '' : item.value)}
               >
                 {item.label}
               </Chip>
             ))}
           </div>
-        </div>
+        </FilterSection>
       </div>
     </div>
   );

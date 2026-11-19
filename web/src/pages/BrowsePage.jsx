@@ -40,21 +40,12 @@ export default function BrowsePage() {
     const rawCategory = params.get('cat') || '';
     const category = getCategoryDef(rawCategory, categoryType);
 
-    const attributes = {};
-    if (category) {
-      for (const group of category.filters) {
-        const value = params.get(group.key);
-        if (value) attributes[group.key] = value;
-      }
-    }
-
     return {
       q: params.get('q') || '',
       tipo,
       cat: category?.id || '',
       category,
       sub: category ? params.get('sub') || '' : '',
-      attributes,
       condition: params.get('condition') || '',
       minPrice: params.get('minPrice') || '',
       maxPrice: params.get('maxPrice') || '',
@@ -74,7 +65,6 @@ export default function BrowsePage() {
       maxPrice: state.maxPrice || undefined,
       date: state.date || undefined,
       sort: state.sort !== 'recent' ? state.sort : undefined,
-      ...state.attributes,
     }),
     [state],
   );
@@ -157,13 +147,6 @@ export default function BrowsePage() {
     });
   };
 
-  const changeAttribute = (key, value) => {
-    update((p) => {
-      if (!value) p.delete(key);
-      else p.set(key, value);
-    });
-  };
-
   const changePrice = ({ min, max }) => {
     update((p) => {
       if (min === '' || min == null) p.delete('minPrice');
@@ -236,18 +219,6 @@ export default function BrowsePage() {
       label: activeSubcategory.label,
       clear: () => changeSubcategory(null),
     });
-  }
-  if (state.category) {
-    for (const group of state.category.filters) {
-      const value = state.attributes[group.key];
-      if (!value) continue;
-      const option = group.options.find((item) => item.value === value);
-      activeFilters.push({
-        key: group.key,
-        label: `${group.label}: ${option?.label || value}`,
-        clear: () => changeAttribute(group.key, ''),
-      });
-    }
   }
   if (state.condition) {
     activeFilters.push({
@@ -357,7 +328,6 @@ export default function BrowsePage() {
                 categories={categories}
                 category={state.category}
                 subcategory={state.sub}
-                attributes={state.attributes}
                 condition={state.condition}
                 date={state.date}
                 minPrice={state.minPrice}
@@ -366,7 +336,6 @@ export default function BrowsePage() {
                 hasFilters={activeFilters.length > 0}
                 onSelectCategory={changeCategory}
                 onSelectSubcategory={changeSubcategory}
-                onAttribute={changeAttribute}
                 onCondition={changeCondition}
                 onDate={changeDate}
                 onPrice={changePrice}
