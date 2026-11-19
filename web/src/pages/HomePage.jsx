@@ -1,12 +1,27 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import SiteHeader from '../components/layout/SiteHeader.jsx';
 import SiteFooter from '../components/layout/SiteFooter.jsx';
 import HomeBannerSlider from '../components/home/HomeBannerSlider.jsx';
+import { useMarketplace } from '../store/MarketplaceContext.jsx';
+import { mediaUrl } from '../api/config.js';
+
+const FEATURED_ID = 'aebe3cc3-56d0-4d1a-90f7-ea614c2aeab4';
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const { listings, refreshListings } = useMarketplace();
   const [q, setQ] = useState('');
+
+  useEffect(() => {
+    refreshListings().catch(() => {});
+  }, [refreshListings]);
+
+  const featured = useMemo(() => {
+    const tv = listings.find((item) => item.id === FEATURED_ID);
+    if (tv) return tv;
+    return listings.find((item) => item.images?.length > 0) || null;
+  }, [listings]);
 
   const goSearch = (e) => {
     e.preventDefault();
@@ -15,12 +30,67 @@ export default function HomePage() {
     navigate(`/buscar?${params.toString()}`);
   };
 
+  const featuredImage = featured?.images?.[0]
+    ? mediaUrl(featured.images[0])
+    : '';
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
 
       <main className="flex-1">
         <HomeBannerSlider />
+
+        {featured && (
+          <section className="border-b border-[var(--line)] bg-white/65 py-10 sm:py-12">
+            <div className="mx-auto max-w-6xl px-4">
+              <h2 className="font-display text-2xl font-bold text-[var(--ink)] sm:text-3xl">
+                Destacado
+              </h2>
+              <Link
+                to={`/anuncio/${featured.id}`}
+                className="group mt-5 grid overflow-hidden rounded-2xl border border-[var(--line)] bg-white transition hover:border-[var(--brand-soft)] hover:shadow-md md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden bg-[var(--surface)]">
+                  {featuredImage ? (
+                    <img
+                      src={featuredImage}
+                      alt={featured.title}
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-sm text-[var(--ink-faint)]">
+                      Sin foto
+                    </div>
+                  )}
+                  <span className="absolute left-3 top-3 rounded-full bg-[var(--coral)] px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
+                    Destacado
+                  </span>
+                </div>
+
+                <div className="flex flex-col justify-center p-6 sm:p-8">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--brand)]">
+                    {featured.category || 'Anuncio'}
+                  </p>
+                  <h3 className="mt-2 font-display text-2xl font-bold leading-tight text-[var(--ink)]">
+                    {featured.title}
+                  </h3>
+                  {featured.description && (
+                    <p className="mt-2 line-clamp-3 text-sm text-[var(--ink-muted)]">
+                      {featured.description}
+                    </p>
+                  )}
+                  <p className="mt-4 font-display text-2xl font-bold text-[var(--brand-deep)]">
+                    S/ {featured.price}
+                  </p>
+                  <span className="mt-4 inline-flex w-fit items-center gap-1 text-sm font-semibold text-[var(--brand)] transition group-hover:translate-x-1">
+                    Ver anuncio →
+                  </span>
+                </div>
+              </Link>
+            </div>
+          </section>
+        )}
 
         <section className="border-b border-[var(--line)] bg-white/65 py-10 sm:py-12">
           <div className="mx-auto max-w-6xl px-4">
