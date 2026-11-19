@@ -302,7 +302,7 @@ export default function HomePage() {
                         type="button"
                         aria-pressed={active}
                         onClick={() => selectCategory(item.id)}
-                        className={`rounded-xl border px-3 py-3 text-left transition ${
+                        className={`rounded-xl border px-3 py-3 text-left underline decoration-[var(--brand)] decoration-2 underline-offset-4 transition ${
                           active
                             ? 'border-[var(--brand)] bg-[var(--mint-soft)] text-[var(--ink)]'
                             : 'border-[var(--line)] bg-white text-[var(--ink)] hover:border-[var(--brand-soft)]'

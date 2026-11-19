@@ -58,11 +58,7 @@ export function CategoryMenu() {
               <div key={category.id} className="min-w-0">
                 <Link
                   to={`/?productos=1&cat=${category.id}`}
-                  className={`block text-sm font-bold transition hover:text-[var(--brand)] ${
-                    activeCat === category.id
-                      ? 'text-[var(--ink)] underline decoration-[var(--brand)] decoration-2 underline-offset-4'
-                      : 'text-[var(--ink)]'
-                  }`}
+                  className="block text-sm font-bold text-[var(--ink)] underline decoration-[var(--brand)] decoration-2 underline-offset-4 transition hover:text-[var(--brand)]"
                 >
                   {category.label}
                 </Link>
